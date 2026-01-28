@@ -1,0 +1,249 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Avella" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Avella
+        - navigation [ref=e7]:
+          - link "All Products" [ref=e8] [cursor=pointer]:
+            - /url: /products
+          - link "Laptops" [ref=e9] [cursor=pointer]:
+            - /url: /products?category=laptops
+          - link "Smartphones" [ref=e10] [cursor=pointer]:
+            - /url: /products?category=smartphones
+          - link "Tablets" [ref=e11] [cursor=pointer]:
+            - /url: /products?category=tablets
+          - link "Headphones" [ref=e12] [cursor=pointer]:
+            - /url: /products?category=headphones
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - link "Log in" [ref=e15] [cursor=pointer]:
+              - /url: /login
+            - link "Sign up" [ref=e16] [cursor=pointer]:
+              - /url: /register
+          - link "Shopping Cart" [ref=e17] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e19]
+            - generic [ref=e23]: Shopping Cart
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e29]:
+          - heading "Premium Electronics for Modern Living" [level=1] [ref=e30]:
+            - text: Premium Electronics for
+            - generic [ref=e31]: Modern Living
+          - paragraph [ref=e32]: Discover cutting-edge technology that enhances your digital lifestyle. Quality products, exceptional service.
+          - generic [ref=e33]:
+            - link "Shop Now" [ref=e34] [cursor=pointer]:
+              - /url: /products
+              - text: Shop Now
+              - img [ref=e35]
+            - link "Browse Laptops" [ref=e37] [cursor=pointer]:
+              - /url: /products?category=laptops
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - heading "Shop by Category" [level=2] [ref=e41]
+            - paragraph [ref=e42]: Explore our curated collection of premium electronics
+          - generic [ref=e43]:
+            - link "Cameras Cameras 8 products" [ref=e44] [cursor=pointer]:
+              - /url: /products?category=cameras
+              - generic [ref=e45]:
+                - img "Cameras" [ref=e47]
+                - heading "Cameras" [level=3] [ref=e48]
+                - paragraph [ref=e49]: 8 products
+            - link "Headphones Headphones 8 products" [ref=e50] [cursor=pointer]:
+              - /url: /products?category=headphones
+              - generic [ref=e51]:
+                - img "Headphones" [ref=e53]
+                - heading "Headphones" [level=3] [ref=e54]
+                - paragraph [ref=e55]: 8 products
+            - link "Laptops Laptops 8 products" [ref=e56] [cursor=pointer]:
+              - /url: /products?category=laptops
+              - generic [ref=e57]:
+                - img "Laptops" [ref=e59]
+                - heading "Laptops" [level=3] [ref=e60]
+                - paragraph [ref=e61]: 8 products
+            - link "Smartphones Smartphones 8 products" [ref=e62] [cursor=pointer]:
+              - /url: /products?category=smartphones
+              - generic [ref=e63]:
+                - img "Smartphones" [ref=e65]
+                - heading "Smartphones" [level=3] [ref=e66]
+                - paragraph [ref=e67]: 8 products
+            - link "Smartwatches Smartwatches 8 products" [ref=e68] [cursor=pointer]:
+              - /url: /products?category=smartwatches
+              - generic [ref=e69]:
+                - img "Smartwatches" [ref=e71]
+                - heading "Smartwatches" [level=3] [ref=e72]
+                - paragraph [ref=e73]: 8 products
+            - link "Tablets Tablets 8 products" [ref=e74] [cursor=pointer]:
+              - /url: /products?category=tablets
+              - generic [ref=e75]:
+                - img "Tablets" [ref=e77]
+                - heading "Tablets" [level=3] [ref=e78]
+                - paragraph [ref=e79]: 8 products
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - heading "Featured Products" [level=2] [ref=e84]
+              - paragraph [ref=e85]: Handpicked favorites from our collection
+            - link "View All" [ref=e86] [cursor=pointer]:
+              - /url: /products
+              - text: View All
+              - img [ref=e87]
+          - generic [ref=e89]:
+            - link "Panasonic Lumix S5 II -9% Panasonic Lumix S5 II $1,999.00 $2,199.00 Add to Cart" [ref=e90] [cursor=pointer]:
+              - /url: /products/panasonic-lumix-s5-ii
+              - generic [ref=e92]:
+                - generic [ref=e93]:
+                  - img "Panasonic Lumix S5 II" [ref=e94]
+                  - generic [ref=e95]: "-9%"
+                - generic [ref=e96]:
+                  - heading "Panasonic Lumix S5 II" [level=3] [ref=e97]
+                  - generic [ref=e98]:
+                    - generic [ref=e99]: $1,999.00
+                    - generic [ref=e100]: $2,199.00
+                  - button "Add to Cart" [ref=e101]
+            - link "Canon EOS R6 Mark II -11% Canon EOS R6 Mark II $2,499.00 $2,799.00 Add to Cart" [ref=e102] [cursor=pointer]:
+              - /url: /products/canon-eos-r6-mark-ii
+              - generic [ref=e104]:
+                - generic [ref=e105]:
+                  - img "Canon EOS R6 Mark II" [ref=e106]
+                  - generic [ref=e107]: "-11%"
+                - generic [ref=e108]:
+                  - heading "Canon EOS R6 Mark II" [level=3] [ref=e109]
+                  - generic [ref=e110]:
+                    - generic [ref=e111]: $2,499.00
+                    - generic [ref=e112]: $2,799.00
+                  - button "Add to Cart" [ref=e113]
+            - link "GoPro HERO12 Black -11% GoPro HERO12 Black $399.00 $449.00 Add to Cart" [ref=e114] [cursor=pointer]:
+              - /url: /products/gopro-hero12-black
+              - generic [ref=e116]:
+                - generic [ref=e117]:
+                  - img "GoPro HERO12 Black" [ref=e118]
+                  - generic [ref=e119]: "-11%"
+                - generic [ref=e120]:
+                  - heading "GoPro HERO12 Black" [level=3] [ref=e121]
+                  - generic [ref=e122]:
+                    - generic [ref=e123]: $399.00
+                    - generic [ref=e124]: $449.00
+                  - button "Add to Cart" [ref=e125]
+            - link "DJI Osmo Action 4 -11% DJI Osmo Action 4 $399.00 $449.00 Add to Cart" [ref=e126] [cursor=pointer]:
+              - /url: /products/dji-osmo-action-4
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - img "DJI Osmo Action 4" [ref=e130]
+                  - generic [ref=e131]: "-11%"
+                - generic [ref=e132]:
+                  - heading "DJI Osmo Action 4" [level=3] [ref=e133]
+                  - generic [ref=e134]:
+                    - generic [ref=e135]: $399.00
+                    - generic [ref=e136]: $449.00
+                  - button "Add to Cart" [ref=e137]
+            - link "Fujifilm X-T5 -11% Fujifilm X-T5 $1,699.00 $1,899.00 Add to Cart" [ref=e138] [cursor=pointer]:
+              - /url: /products/fujifilm-x-t5
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - img "Fujifilm X-T5" [ref=e142]
+                  - generic [ref=e143]: "-11%"
+                - generic [ref=e144]:
+                  - heading "Fujifilm X-T5" [level=3] [ref=e145]
+                  - generic [ref=e146]:
+                    - generic [ref=e147]: $1,699.00
+                    - generic [ref=e148]: $1,899.00
+                  - button "Add to Cart" [ref=e149]
+            - link "Nikon Z8 -7% Nikon Z8 $3,999.00 $4,299.00 Add to Cart" [ref=e150] [cursor=pointer]:
+              - /url: /products/nikon-z8
+              - generic [ref=e152]:
+                - generic [ref=e153]:
+                  - img "Nikon Z8" [ref=e154]
+                  - generic [ref=e155]: "-7%"
+                - generic [ref=e156]:
+                  - heading "Nikon Z8" [level=3] [ref=e157]
+                  - generic [ref=e158]:
+                    - generic [ref=e159]: $3,999.00
+                    - generic [ref=e160]: $4,299.00
+                  - button "Add to Cart" [ref=e161]
+            - link "Insta360 X3 -10% Insta360 X3 $449.00 $499.00 Add to Cart" [ref=e162] [cursor=pointer]:
+              - /url: /products/insta360-x3
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - img "Insta360 X3" [ref=e166]
+                  - generic [ref=e167]: "-10%"
+                - generic [ref=e168]:
+                  - heading "Insta360 X3" [level=3] [ref=e169]
+                  - generic [ref=e170]:
+                    - generic [ref=e171]: $449.00
+                    - generic [ref=e172]: $499.00
+                  - button "Add to Cart" [ref=e173]
+            - link "Sony A7 IV -7% Sony A7 IV $2,499.00 $2,699.00 Add to Cart" [ref=e174] [cursor=pointer]:
+              - /url: /products/sony-a7-iv
+              - generic [ref=e176]:
+                - generic [ref=e177]:
+                  - img "Sony A7 IV" [ref=e178]
+                  - generic [ref=e179]: "-7%"
+                - generic [ref=e180]:
+                  - heading "Sony A7 IV" [level=3] [ref=e181]
+                  - generic [ref=e182]:
+                    - generic [ref=e183]: $2,499.00
+                    - generic [ref=e184]: $2,699.00
+                  - button "Add to Cart" [ref=e185]
+        - generic [ref=e188]:
+          - heading "Stay Updated" [level=2] [ref=e189]
+          - paragraph [ref=e190]: Subscribe to get special offers, free giveaways, and updates on the latest products.
+          - generic [ref=e191]:
+            - textbox "Enter your email" [ref=e192]
+            - button "Subscribe" [ref=e193] [cursor=pointer]
+    - contentinfo [ref=e194]:
+      - generic [ref=e195]:
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - heading "Avella" [level=3] [ref=e198]
+            - paragraph [ref=e199]: Premium electronics for the modern lifestyle. Quality products, exceptional service.
+          - generic [ref=e200]:
+            - heading "Shop" [level=3] [ref=e201]
+            - list [ref=e202]:
+              - listitem [ref=e203]:
+                - link "Laptops" [ref=e204] [cursor=pointer]:
+                  - /url: /products?category=laptops
+              - listitem [ref=e205]:
+                - link "Smartphones" [ref=e206] [cursor=pointer]:
+                  - /url: /products?category=smartphones
+              - listitem [ref=e207]:
+                - link "Tablets" [ref=e208] [cursor=pointer]:
+                  - /url: /products?category=tablets
+              - listitem [ref=e209]:
+                - link "Headphones" [ref=e210] [cursor=pointer]:
+                  - /url: /products?category=headphones
+          - generic [ref=e211]:
+            - heading "Support" [level=3] [ref=e212]
+            - list [ref=e213]:
+              - listitem [ref=e214]:
+                - link "Contact Us" [ref=e215] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=e216]:
+                - link "Shipping Info" [ref=e217] [cursor=pointer]:
+                  - /url: /shipping
+              - listitem [ref=e218]:
+                - link "Returns" [ref=e219] [cursor=pointer]:
+                  - /url: /returns
+              - listitem [ref=e220]:
+                - link "FAQ" [ref=e221] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e222]:
+            - heading "Legal" [level=3] [ref=e223]
+            - list [ref=e224]:
+              - listitem [ref=e225]:
+                - link "Privacy Policy" [ref=e226] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e227]:
+                - link "Terms of Service" [ref=e228] [cursor=pointer]:
+                  - /url: /terms
+              - listitem [ref=e229]:
+                - link "Cookie Policy" [ref=e230] [cursor=pointer]:
+                  - /url: /cookies
+        - paragraph [ref=e232]: © 2026 Avella Electronics. All rights reserved.
+  - alert [ref=e233]
+```

@@ -1,0 +1,91 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Avella" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Avella
+        - navigation [ref=e7]:
+          - link "All Products" [ref=e8] [cursor=pointer]:
+            - /url: /products
+          - link "Laptops" [ref=e9] [cursor=pointer]:
+            - /url: /products?category=laptops
+          - link "Smartphones" [ref=e10] [cursor=pointer]:
+            - /url: /products?category=smartphones
+          - link "Tablets" [ref=e11] [cursor=pointer]:
+            - /url: /products?category=tablets
+          - link "Headphones" [ref=e12] [cursor=pointer]:
+            - /url: /products?category=headphones
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - link "Log in" [ref=e15] [cursor=pointer]:
+              - /url: /login
+            - link "Sign up" [ref=e16] [cursor=pointer]:
+              - /url: /register
+          - link "Shopping Cart" [ref=e17] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e19]
+            - generic [ref=e23]: Shopping Cart
+    - main [ref=e24]:
+      - generic [ref=e25]:
+        - heading "Shopping Cart" [level=1] [ref=e26]
+        - generic [ref=e27]:
+          - paragraph [ref=e28]: Your cart is empty
+          - link "Continue Shopping" [ref=e29] [cursor=pointer]:
+            - /url: /products
+            - text: Continue Shopping
+            - img [ref=e30]
+    - contentinfo [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - heading "Avella" [level=3] [ref=e36]
+            - paragraph [ref=e37]: Premium electronics for the modern lifestyle. Quality products, exceptional service.
+          - generic [ref=e38]:
+            - heading "Shop" [level=3] [ref=e39]
+            - list [ref=e40]:
+              - listitem [ref=e41]:
+                - link "Laptops" [ref=e42] [cursor=pointer]:
+                  - /url: /products?category=laptops
+              - listitem [ref=e43]:
+                - link "Smartphones" [ref=e44] [cursor=pointer]:
+                  - /url: /products?category=smartphones
+              - listitem [ref=e45]:
+                - link "Tablets" [ref=e46] [cursor=pointer]:
+                  - /url: /products?category=tablets
+              - listitem [ref=e47]:
+                - link "Headphones" [ref=e48] [cursor=pointer]:
+                  - /url: /products?category=headphones
+          - generic [ref=e49]:
+            - heading "Support" [level=3] [ref=e50]
+            - list [ref=e51]:
+              - listitem [ref=e52]:
+                - link "Contact Us" [ref=e53] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=e54]:
+                - link "Shipping Info" [ref=e55] [cursor=pointer]:
+                  - /url: /shipping
+              - listitem [ref=e56]:
+                - link "Returns" [ref=e57] [cursor=pointer]:
+                  - /url: /returns
+              - listitem [ref=e58]:
+                - link "FAQ" [ref=e59] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e60]:
+            - heading "Legal" [level=3] [ref=e61]
+            - list [ref=e62]:
+              - listitem [ref=e63]:
+                - link "Privacy Policy" [ref=e64] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e65]:
+                - link "Terms of Service" [ref=e66] [cursor=pointer]:
+                  - /url: /terms
+              - listitem [ref=e67]:
+                - link "Cookie Policy" [ref=e68] [cursor=pointer]:
+                  - /url: /cookies
+        - paragraph [ref=e70]: © 2026 Avella Electronics. All rights reserved.
+  - alert [ref=e71]
+```

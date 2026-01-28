@@ -1,0 +1,780 @@
+openapi: 3.0.3
+info:
+  title: Avella Ecommerce API
+  description: |
+    RESTful API for Avella Electronics Ecommerce MVP.
+    
+    **Features:**
+    - Product catalog with filtering and search
+    - Shopping cart management
+    - Order processing with stock validation
+    - JWT-based authentication
+    
+    **Base URL:** `http://localhost:3001/api`
+  version: 1.0.0
+  contact:
+    name: Avella Team
+    email: support@avella.com
+
+servers:
+  - url: http://localhost:3001/api
+    description: Local development server
+  - url: https://api.avella.com/api
+    description: Production server
+
+tags:
+  - name: Products
+    description: Product catalog operations
+  - name: Categories
+    description: Product categories
+  - name: Cart
+    description: Shopping cart management
+  - name: Orders
+    description: Order processing
+  - name: Authentication
+    description: User authentication
+
+paths:
+  /products:
+    get:
+      tags: [Products]
+      summary: List all products
+      description: Retrieve a paginated list of products with optional filtering
+      parameters:
+        - name: category
+          in: query
+          description: Filter by category slug
+          schema:
+            type: string
+          example: laptops
+        - name: minPrice
+          in: query
+          description: Minimum price filter
+          schema:
+            type: number
+          example: 100
+        - name: maxPrice
+          in: query
+          description: Maximum price filter
+          schema:
+            type: number
+          example: 2000
+        - name: search
+          in: query
+          description: Search in name, description, SKU
+          schema:
+            type: string
+          example: macbook
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+  
+  /products/{slug}:
+    get:
+      tags: [Products]
+      summary: Get product by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: macbook-pro-16-m3-max
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all categories
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+  
+  /categories/{slug}:
+    get:
+      tags: [Categories]
+      summary: Get category with products
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: laptops
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Category with products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CategoryWithProducts'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /cart:
+    post:
+      tags: [Cart]
+      summary: Create new cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                sessionId:
+                  type: string
+              oneOf:
+                - required: [userId]
+                - required: [sessionId]
+      responses:
+        '201':
+          description: Cart created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cart'
+  
+  /cart/{id}:
+    get:
+      tags: [Cart]
+      summary: Get cart with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cart with items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CartWithItems'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /cart/{id}/items:
+    post:
+      tags: [Cart]
+      summary: Add item to cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
+                  default: 1
+      responses:
+        '201':
+          description: Item added to cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /cart/{id}/items/{itemId}:
+    put:
+      tags: [Cart]
+      summary: Update item quantity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+    
+    delete:
+      tags: [Cart]
+      summary: Remove item from cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+  
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create order from cart
+      description: Convert cart to order, validate stock, and update inventory atomically
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cartId, shippingAddress]
+              properties:
+                cartId:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+                  format: uuid
+                shippingAddress:
+                  $ref: '#/components/schemas/Address'
+                billingAddress:
+                  $ref: '#/components/schemas/Address'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrderWithItems'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: User already exists
+  
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+        compare_at_price:
+          type: number
+          format: decimal
+        sku:
+          type: string
+        stock_quantity:
+          type: integer
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        specifications:
+          type: object
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        category_name:
+          type: string
+        category_slug:
+          type: string
+    
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+        product_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    
+    CategoryWithProducts:
+      allOf:
+        - $ref: '#/components/schemas/Category'
+        - type: object
+          properties:
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/Product'
+    
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        session_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cart_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: decimal
+        created_at:
+          type: string
+          format: date-time
+    
+    CartWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Cart'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/CartItem'
+                  - type: object
+                    properties:
+                      product_name:
+                        type: string
+                      product_images:
+                        type: array
+                        items:
+                          type: string
+                      product_slug:
+                        type: string
+                      stock_quantity:
+                        type: integer
+                      subtotal:
+                        type: number
+            subtotal:
+              type: number
+            tax:
+              type: number
+            total:
+              type: number
+    
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_number:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+        subtotal:
+          type: number
+        tax:
+          type: number
+        shipping:
+          type: number
+        total:
+          type: number
+        shipping_address:
+          $ref: '#/components/schemas/Address'
+        billing_address:
+          $ref: '#/components/schemas/Address'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+        product_name:
+          type: string
+        product_sku:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        total:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    
+    OrderWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+    
+    Address:
+      type: object
+      required: [name, street, city, state, zip, country]
+      properties:
+        name:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+    
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [customer, admin]
+        created_at:
+          type: string
+          format: date-time
+    
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              description: JWT token
+    
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+  
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

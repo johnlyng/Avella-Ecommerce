@@ -1,0 +1,81 @@
+# Avella Ecommerce - Docker Compose Configuration
+# Multi-container setup: PostgreSQL + Node.js API + Next.js Frontend
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: avella-postgres
+    environment:
+      POSTGRES_DB: avella
+      POSTGRES_USER: avella_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+      - ./database/seeds/002_seed_categories.sql:/docker-entrypoint-initdb.d/002_seed_categories.sql
+      - ./database/seeds/003_seed_products.sql:/docker-entrypoint-initdb.d/003_seed_products.sql
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U avella_user -d avella" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avella-network
+
+  # Node.js API Backend
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: avella-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://avella_user:${DB_PASSWORD}@postgres:5432/avella
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    networks:
+      - avella-network
+    command: npm run dev
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: avella-frontend
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      SERVER_API_URL: http://api:3001
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - avella-network
+    command: npm run dev
+
+networks:
+  avella-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
