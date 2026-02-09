@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 
@@ -43,33 +43,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false)
     }, [])
 
-    const login = (newToken: string, newUser: User) => {
+    const login = useCallback((newToken: string, newUser: User) => {
         setToken(newToken)
         setUser(newUser)
         localStorage.setItem('token', newToken)
         localStorage.setItem('user', JSON.stringify(newUser))
-    }
+    }, [])
 
-    const logout = () => {
+    const logout = useCallback(() => {
         setToken(null)
         setUser(null)
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         router.push('/')
         router.refresh()
-    }
+    }, [router])
+
+    const value = React.useMemo(() => ({
+        user,
+        token,
+        isAuthenticated: !!token,
+        isLoading,
+        login,
+        logout,
+    }), [user, token, isLoading, login, logout])
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                token,
-                isAuthenticated: !!token,
-                isLoading,
-                login,
-                logout,
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )

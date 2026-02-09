@@ -9,14 +9,22 @@ import { ArrowRight } from 'lucide-react'
 export const revalidate = 60 // Revalidate every 60 seconds
 
 async function getHomeData() {
-    const [categoriesRes, productsRes] = await Promise.all([
-        api.getCategories(),
-        api.getProducts({ limit: 8 }),
-    ])
+    try {
+        const [categoriesRes, productsRes] = await Promise.all([
+            api.getCategories(),
+            api.getProducts({ limit: 8 }),
+        ])
 
-    return {
-        categories: categoriesRes.data,
-        featuredProducts: productsRes.data,
+        return {
+            categories: categoriesRes?.data || [],
+            featuredProducts: productsRes?.data || [],
+        }
+    } catch (error) {
+        console.error('Failed to fetch home data:', error)
+        return {
+            categories: [],
+            featuredProducts: [],
+        }
     }
 }
 

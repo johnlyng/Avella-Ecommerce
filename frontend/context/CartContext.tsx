@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { useAuth } from './AuthContext'
 
@@ -17,6 +17,9 @@ interface CartItem {
 interface Cart {
     id: string
     items: CartItem[]
+    subtotal: number
+    tax: number
+    total: number
 }
 
 interface CartContextType {
@@ -73,7 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const [isCreatingCart, setIsCreatingCart] = useState(false)
 
-    const addToCart = async (productId: string, quantity = 1) => {
+    const addToCart = useCallback(async (productId: string, quantity = 1) => {
         try {
             let currentCartId = cart?.id || localStorage.getItem('cartId')
 
@@ -135,9 +138,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             console.error('Add to cart failed:', error)
             throw error
         }
-    }
+    }, [cart?.id, isCreatingCart])
 
-    const removeFromCart = async (itemId: string) => {
+    const removeFromCart = useCallback(async (itemId: string) => {
         if (!cart?.id) return
 
         try {
@@ -147,9 +150,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             console.error('Remove from cart failed:', error)
             throw error
         }
-    }
+    }, [cart?.id])
 
-    const updateQuantity = async (itemId: string, quantity: number) => {
+    const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
         if (!cart?.id) return
 
         try {
@@ -159,9 +162,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             console.error('Update quantity failed:', error)
             throw error
         }
-    }
+    }, [cart?.id])
 
-    const mergeCart = async (userId: string) => {
+    const mergeCart = useCallback(async (userId: string) => {
         const guestCartId = localStorage.getItem('cartId')
         if (!guestCartId) return
 
@@ -175,26 +178,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             // If merge fails (e.g. guest cart expired), just load the user's cart
             localStorage.removeItem('cartId')
         }
-    }
+    }, [])
 
-    const clearCart = () => {
+    const clearCart = useCallback(() => {
         setCart(null)
         localStorage.removeItem('cartId')
-    }
+    }, [])
 
     const itemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0
 
+    const value = React.useMemo(() => ({
+        cart,
+        itemCount,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        mergeCart,
+        clearCart,
+        loading
+    }), [cart, itemCount, addToCart, removeFromCart, updateQuantity, mergeCart, clearCart, loading])
+
     return (
-        <CartContext.Provider value={{
-            cart,
-            itemCount,
-            addToCart,
-            removeFromCart,
-            updateQuantity,
-            mergeCart,
-            clearCart,
-            loading
-        }}>
+        <CartContext.Provider value={value}>
             {children}
         </CartContext.Provider>
     )

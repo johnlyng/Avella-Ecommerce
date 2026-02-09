@@ -35,7 +35,7 @@ export default function OrdersPage() {
             if (!user?.id) return
 
             try {
-                const response = await api.getUserOrders(user.id)
+                const response = await api.getUserOrders(user.id) as any
                 setOrders(response.data)
             } catch (error) {
                 console.error('Failed to fetch orders:', error)

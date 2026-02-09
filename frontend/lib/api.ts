@@ -12,7 +12,7 @@ class ApiClient {
         this.baseUrl = baseUrl;
     }
 
-    private async request<T>(
+    private async request<T = any>(
         endpoint: string,
         options?: RequestInit
     ): Promise<T> {
