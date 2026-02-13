@@ -16,6 +16,7 @@ interface CartItem {
 
 interface Cart {
     id: string
+    cart_token: string
     items: CartItem[]
     subtotal: number
     tax: number
@@ -25,7 +26,7 @@ interface Cart {
 interface CartContextType {
     cart: Cart | null
     itemCount: number
-    addToCart: (productId: string, quantity?: number) => Promise<void>
+    addToCart: (productSlugOrId: string, quantity?: number, isSlug?: boolean) => Promise<void>
     removeFromCart: (itemId: string) => Promise<void>
     updateQuantity: (itemId: string, quantity: number) => Promise<void>
     mergeCart: (userId: string) => Promise<void>
@@ -46,7 +47,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (prevAuthRef.current && !isAuthenticated) {
             console.info('User logged out, clearing cart state.')
             setCart(null)
-            localStorage.removeItem('cartId')
+            localStorage.removeItem('cartToken')
         }
         prevAuthRef.current = isAuthenticated
     }, [isAuthenticated])
@@ -54,20 +55,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // Load cart on mount
     useEffect(() => {
         const initializeCart = async () => {
-            // COMMENTED OUT FOR CLEAN START: Load cart on mount
-            /*
-            const cartId = localStorage.getItem('cartId')
-            if (cartId) {
+            const cartToken = localStorage.getItem('cartToken')
+            if (cartToken) {
                 try {
-                    const response: any = await api.getCart(cartId)
+                    const response: any = await api.getCart(cartToken)
                     setCart(response.data)
                 } catch (error) {
                     console.error('Failed to load cart:', error)
-                    // If cart not found (e.g. expired), clear ID
-                    localStorage.removeItem('cartId')
+                    // If cart not found (e.g. expired), clear token
+                    localStorage.removeItem('cartToken')
                 }
             }
-            */
+
             setLoading(false)
         }
 
@@ -76,19 +75,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const [isCreatingCart, setIsCreatingCart] = useState(false)
 
-    const addToCart = useCallback(async (productId: string, quantity = 1) => {
+    const addToCart = useCallback(async (productSlugOrId: string, quantity = 1, isSlug = true) => {
         try {
-            let currentCartId = cart?.id || localStorage.getItem('cartId')
+            let currentCartToken = cart?.cart_token || localStorage.getItem('cartToken')
 
             // Create cart if doesn't exist
-            if (!currentCartId) {
+            if (!currentCartToken) {
                 if (isCreatingCart) return // Prevent double-creation
                 setIsCreatingCart(true)
                 try {
                     const sessionId = Math.random().toString(36).substring(7)
                     const response: any = await api.createCart({ sessionId })
-                    currentCartId = response.data.id
-                    localStorage.setItem('cartId', currentCartId!)
+                    currentCartToken = response.data.cart_token
+                    localStorage.setItem('cartToken', currentCartToken!)
                     setCart(response.data)
                 } finally {
                     setIsCreatingCart(false)
@@ -97,31 +96,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
             // Add item
             try {
-                const response: any = await api.addToCart(currentCartId!, {
-                    productId,
-                    quantity
-                })
+                const requestData = isSlug
+                    ? { productSlug: productSlugOrId, quantity }
+                    : { productId: productSlugOrId, quantity }
+
+                const response: any = await api.addToCart(currentCartToken!, requestData)
                 setCart(response.data)
             } catch (err: any) {
-                // If the cart doesn't exist (e.g. invalid ID from local storage or DB reset), 
+                // If the cart doesn't exist (e.g. invalid token from local storage or DB reset), 
                 // the API now returns 404. We then try to create a new session and retry.
                 if (err.status === 404) {
                     console.warn('Stale cart session detected (404). Attempting to create new session...')
-                    localStorage.removeItem('cartId')
+                    localStorage.removeItem('cartToken')
 
                     const sessionId = Math.random().toString(36).substring(7)
                     const createRes: any = await api.createCart({ sessionId })
-                    const newCartId = createRes.data.id
+                    const newCartToken = createRes.data.cart_token
 
-                    localStorage.setItem('cartId', newCartId)
+                    localStorage.setItem('cartToken', newCartToken)
                     setCart(createRes.data)
 
                     // Retry add with new cart
                     try {
-                        const retryRes: any = await api.addToCart(newCartId, {
-                            productId,
-                            quantity
-                        })
+                        const requestData = isSlug
+                            ? { productSlug: productSlugOrId, quantity }
+                            : { productId: productSlugOrId, quantity }
+
+                        const retryRes: any = await api.addToCart(newCartToken, requestData)
                         setCart(retryRes.data)
                         console.info('Cart session recovered successfully. Item added.')
                     } catch (retryErr) {
@@ -138,51 +139,51 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             console.error('Add to cart failed:', error)
             throw error
         }
-    }, [cart?.id, isCreatingCart])
+    }, [cart?.cart_token, isCreatingCart])
 
     const removeFromCart = useCallback(async (itemId: string) => {
-        if (!cart?.id) return
+        if (!cart?.cart_token) return
 
         try {
-            const response: any = await api.removeFromCart(cart.id, itemId)
+            const response: any = await api.removeFromCart(cart.cart_token, itemId)
             setCart(response.data)
         } catch (error) {
             console.error('Remove from cart failed:', error)
             throw error
         }
-    }, [cart?.id])
+    }, [cart?.cart_token])
 
     const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
-        if (!cart?.id) return
+        if (!cart?.cart_token) return
 
         try {
-            const response: any = await api.updateCartItem(cart.id, itemId, { quantity })
+            const response: any = await api.updateCartItem(cart.cart_token, itemId, { quantity })
             setCart(response.data)
         } catch (error) {
             console.error('Update quantity failed:', error)
             throw error
         }
-    }, [cart?.id])
+    }, [cart?.cart_token])
 
     const mergeCart = useCallback(async (userId: string) => {
-        const guestCartId = localStorage.getItem('cartId')
-        if (!guestCartId) return
+        const guestCartToken = localStorage.getItem('cartToken')
+        if (!guestCartToken) return
 
         try {
-            const response: any = await api.mergeCart(guestCartId, userId)
+            const response: any = await api.mergeCart(guestCartToken, userId)
             setCart(response.data)
-            localStorage.setItem('cartId', response.data.id)
+            localStorage.setItem('cartToken', response.data.cart_token)
             console.info('Guest cart merged successfully.')
         } catch (error) {
             console.error('Cart merge failed:', error)
             // If merge fails (e.g. guest cart expired), just load the user's cart
-            localStorage.removeItem('cartId')
+            localStorage.removeItem('cartToken')
         }
     }, [])
 
     const clearCart = useCallback(() => {
         setCart(null)
-        localStorage.removeItem('cartId')
+        localStorage.removeItem('cartToken')
     }, [])
 
     const itemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0

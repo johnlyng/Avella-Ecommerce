@@ -42,12 +42,12 @@ export default function CheckoutPage() {
             alert('Your cart is empty')
             return
         }
-        
+
         setIsLoading(true)
 
         try {
-            await api.createOrder({
-                cartId: cart.id,
+            const response = await api.createOrder({
+                cartToken: cart.cart_token,
                 userId: user?.id,
                 shippingAddress: {
                     name: `${formData.firstName} ${formData.lastName}`,
@@ -58,9 +58,15 @@ export default function CheckoutPage() {
                     country: formData.country
                 }
             })
-            
+
             clearCart()
-            router.push('/orders')
+            // Redirect to order confirmation page with order number
+            const orderNumber = response.data?.order_number
+            if (orderNumber) {
+                router.push(`/orders/${orderNumber}`)
+            } else {
+                router.push('/orders')
+            }
         } catch (error: any) {
             console.error(error)
             alert(error.message || 'Failed to place order')

@@ -6,11 +6,11 @@ import { ShoppingCart } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 
 interface AddToCartButtonProps {
-    productId: string
+    productSlug: string
     stockQuantity: number
 }
 
-export function AddToCartButton({ productId, stockQuantity }: AddToCartButtonProps) {
+export function AddToCartButton({ productSlug, stockQuantity }: AddToCartButtonProps) {
     const { addToCart } = useCart()
     const [isLoading, setIsLoading] = React.useState(false)
     const [isAdded, setIsAdded] = React.useState(false)
@@ -19,7 +19,7 @@ export function AddToCartButton({ productId, stockQuantity }: AddToCartButtonPro
         if (isLoading) return
         setIsLoading(true)
         try {
-            await addToCart(productId)
+            await addToCart(productSlug, 1, true) // true = isSlug
             setIsAdded(true)
             setTimeout(() => setIsAdded(false), 2000)
         } catch (error) {

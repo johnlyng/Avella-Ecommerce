@@ -181,8 +181,8 @@ paths:
               type: object
               properties:
                 userId:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 sessionId:
                   type: string
               oneOf:
@@ -199,14 +199,15 @@ paths:
                   data:
                     $ref: '#/components/schemas/Cart'
   
-  /cart/{id}:
+  /cart/{token}:
     get:
       tags: [Cart]
       summary: Get cart with items
       parameters:
-        - name: id
+        - name: token
           in: path
           required: true
+          description: Cart token (UUID)
           schema:
             type: string
             format: uuid
@@ -223,14 +224,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
   
-  /cart/{id}/items:
+  /cart/{token}/items:
     post:
       tags: [Cart]
       summary: Add item to cart
       parameters:
-        - name: id
+        - name: token
           in: path
           required: true
+          description: Cart token (UUID)
           schema:
             type: string
             format: uuid
@@ -240,15 +242,22 @@ paths:
           application/json:
             schema:
               type: object
-              required: [productId]
               properties:
-                productId:
+                productSlug:
                   type: string
-                  format: uuid
+                  description: Product slug (preferred)
+                  example: macbook-pro-16-m3-max
+                productId:
+                  type: integer
+                  format: int64
+                  description: Product ID (backward compatibility)
                 quantity:
                   type: integer
                   minimum: 1
                   default: 1
+              oneOf:
+                - required: [productSlug]
+                - required: [productId]
       responses:
         '201':
           description: Item added to cart
@@ -258,20 +267,21 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/CartItem'
+                    $ref: '#/components/schemas/CartWithItems'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
   
-  /cart/{id}/items/{itemId}:
+  /cart/{token}/items/{itemId}:
     put:
       tags: [Cart]
       summary: Update item quantity
       parameters:
-        - name: id
+        - name: token
           in: path
           required: true
+          description: Cart token (UUID)
           schema:
             type: string
             format: uuid
@@ -279,8 +289,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -301,15 +311,16 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/CartItem'
+                    $ref: '#/components/schemas/CartWithItems'
     
     delete:
       tags: [Cart]
       summary: Remove item from cart
       parameters:
-        - name: id
+        - name: token
           in: path
           required: true
+          description: Cart token (UUID)
           schema:
             type: string
             format: uuid
@@ -317,8 +328,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
       responses:
         '200':
           description: Item removed
@@ -330,7 +341,7 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: '#/components/schemas/CartItem'
+                    $ref: '#/components/schemas/CartWithItems'
   
   /orders:
     post:
@@ -343,14 +354,15 @@ paths:
           application/json:
             schema:
               type: object
-              required: [cartId, shippingAddress]
+              required: [cartToken, shippingAddress]
               properties:
-                cartId:
+                cartToken:
                   type: string
                   format: uuid
+                  description: Cart token from cart creation
                 userId:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 shippingAddress:
                   $ref: '#/components/schemas/Address'
                 billingAddress:
@@ -368,17 +380,18 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
   
-  /orders/{id}:
+  /orders/{orderNumber}:
     get:
       tags: [Orders]
       summary: Get order details
       parameters:
-        - name: id
+        - name: orderNumber
           in: path
           required: true
+          description: Human-readable order number
           schema:
             type: string
-            format: uuid
+          example: ORD-2024-000001
       responses:
         '200':
           description: Order details
@@ -457,11 +470,12 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         category_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
+          nullable: true
         name:
           type: string
         slug:
@@ -502,8 +516,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         slug:
@@ -511,8 +525,8 @@ components:
         description:
           type: string
         parent_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         image_url:
           type: string
@@ -537,11 +551,15 @@ components:
       type: object
       properties:
         id:
+          type: integer
+          format: int64
+        cart_token:
           type: string
           format: uuid
+          description: Secure token for cart access
         user_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         session_id:
           type: string
@@ -557,14 +575,14 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         cart_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         product_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         quantity:
           type: integer
         price:
@@ -609,14 +627,16 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         user_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         order_number:
           type: string
+          description: Human-readable order identifier
+          example: ORD-2024-000001
         status:
           type: string
           enum: [pending, processing, shipped, delivered, cancelled]
@@ -643,14 +663,14 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         order_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         product_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         product_name:
           type: string
@@ -697,8 +717,12 @@ components:
       type: object
       properties:
         id:
+          type: integer
+          format: int64
+        uuid:
           type: string
           format: uuid
+          description: External UUID for secure references
         email:
           type: string
           format: email

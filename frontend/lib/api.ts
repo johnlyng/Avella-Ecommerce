@@ -94,44 +94,44 @@ class ApiClient {
         });
     }
 
-    async getCart(cartId: string) {
-        return this.request(`/api/cart/${cartId}`);
+    async getCart(cartToken: string) {
+        return this.request(`/api/cart/${cartToken}`);
     }
 
-    async addToCart(cartId: string, data: { productId: string; quantity?: number }) {
-        return this.request(`/api/cart/${cartId}/items`, {
+    async addToCart(cartToken: string, data: { productSlug?: string; productId?: string; quantity?: number }) {
+        return this.request(`/api/cart/${cartToken}/items`, {
             method: 'POST',
             body: JSON.stringify(data),
         });
     }
 
     async updateCartItem(
-        cartId: string,
+        cartToken: string,
         itemId: string,
         data: { quantity: number }
     ) {
-        return this.request(`/api/cart/${cartId}/items/${itemId}`, {
+        return this.request(`/api/cart/${cartToken}/items/${itemId}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         });
     }
 
-    async removeFromCart(cartId: string, itemId: string) {
-        return this.request(`/api/cart/${cartId}/items/${itemId}`, {
+    async removeFromCart(cartToken: string, itemId: string) {
+        return this.request(`/api/cart/${cartToken}/items/${itemId}`, {
             method: 'DELETE',
         });
     }
 
-    async mergeCart(guestCartId: string, userId: string) {
+    async mergeCart(guestCartToken: string, userId: string) {
         return this.request('/api/cart/merge', {
             method: 'POST',
-            body: JSON.stringify({ guestCartId, userId }),
+            body: JSON.stringify({ guestCartToken, userId }),
         });
     }
 
     // Orders
     async createOrder(data: {
-        cartId: string;
+        cartToken: string;
         userId?: string;
         shippingAddress: {
             name: string;
@@ -149,8 +149,8 @@ class ApiClient {
         });
     }
 
-    async getOrder(orderId: string) {
-        return this.request(`/api/orders/${orderId}`);
+    async getOrder(orderNumber: string) {
+        return this.request(`/api/orders/${orderNumber}`);
     }
 
     async getUserOrders(userId: string) {

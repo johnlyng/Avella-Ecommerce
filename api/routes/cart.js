@@ -1,14 +1,13 @@
 // Cart API Routes
 // POST /api/cart - Create cart
-// GET /api/cart/:id - Get cart with items
-// POST /api/cart/:id/items - Add item to cart
-// PUT /api/cart/:id/items/:itemId - Update item quantity
-// DELETE /api/cart/:id/items/:itemId - Remove item from cart
+// GET /api/cart/:token - Get cart with items (by cart_token)
+// POST /api/cart/:token/items - Add item to cart (accepts productSlug)
+// PUT /api/cart/:token/items/:itemId - Update item quantity
+// DELETE /api/cart/:token/items/:itemId - Remove item from cart
 
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { v4: uuidv4 } = require('crypto');
 
 // Helper to calculate cart totals
 async function calculateCartTotals(cartId) {
@@ -52,34 +51,14 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-// GET /api/cart/:id - Get cart with items
-router.get('/:id', async (req, res, next) => {
+// GET /api/cart/:token - Get cart with items (by cart_token)
+router.get('/:token', async (req, res, next) => {
     try {
-        const { id } = req.params;
-        const cart = await fetchCartWithItems(id);
+        const { token } = req.params;
 
-        if (!cart) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Cart not found',
-            });
-        }
-
-        res.json({ data: cart });
-    } catch (error) {
-        next(error);
-    }
-});
-
-// POST /api/cart/:id/items - Add item to cart
-router.post('/:id/items', async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const { productId, quantity = 1 } = req.body;
-
-        // Check if cart exists
-        const cartQuery = 'SELECT * FROM carts WHERE id = $1';
-        const cartResult = await db.query(cartQuery, [id]);
+        // Lookup cart by cart_token
+        const cartQuery = 'SELECT id FROM carts WHERE cart_token = $1';
+        const cartResult = await db.query(cartQuery, [token]);
 
         if (cartResult.rows.length === 0) {
             return res.status(404).json({
@@ -88,16 +67,52 @@ router.post('/:id/items', async (req, res, next) => {
             });
         }
 
-        if (!productId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'productId is required',
+        const cartId = cartResult.rows[0].id;
+        const cart = await fetchCartWithItems(cartId);
+
+        res.json({ data: cart });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST /api/cart/:token/items - Add item to cart (accepts productSlug)
+router.post('/:token/items', async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const { productSlug, productId, quantity = 1 } = req.body;
+        console.log(`DEBUG: Add to cart - token: ${token}, productSlug: ${productSlug}, productId: ${productId}, quantity: ${quantity}`);
+        const cartQuery = 'SELECT id FROM carts WHERE cart_token = $1';
+        const cartResult = await db.query(cartQuery, [token]);
+
+        if (cartResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Cart not found',
             });
         }
 
-        // Get product details and check stock
-        const productQuery = 'SELECT * FROM products WHERE id = $1 AND is_active = true';
-        const productResult = await db.query(productQuery, [productId]);
+        const cartId = cartResult.rows[0].id;
+
+        // Accept either productSlug (preferred) or productId (backward compatibility)
+        if (!productSlug && !productId) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'productSlug or productId is required',
+            });
+        }
+
+        // Get product details by slug or id
+        let productQuery, productParam;
+        if (productSlug) {
+            productQuery = 'SELECT * FROM products WHERE slug = $1 AND is_active = true';
+            productParam = productSlug;
+        } else {
+            productQuery = 'SELECT * FROM products WHERE id = $1 AND is_active = true';
+            productParam = productId;
+        }
+
+        const productResult = await db.query(productQuery, [productParam]);
 
         if (productResult.rows.length === 0) {
             return res.status(404).json({
@@ -120,7 +135,7 @@ router.post('/:id/items', async (req, res, next) => {
       SELECT * FROM cart_items 
       WHERE cart_id = $1 AND product_id = $2
     `;
-        const existingResult = await db.query(existingQuery, [id, productId]);
+        const existingResult = await db.query(existingQuery, [cartId, product.id]);
 
         let result;
         if (existingResult.rows.length > 0) {
@@ -132,7 +147,7 @@ router.post('/:id/items', async (req, res, next) => {
         WHERE cart_id = $2 AND product_id = $3
         RETURNING *
       `;
-            result = await db.query(updateQuery, [newQuantity, id, productId]);
+            result = await db.query(updateQuery, [newQuantity, cartId, product.id]);
         } else {
             // Insert new item
             const insertQuery = `
@@ -141,24 +156,24 @@ router.post('/:id/items', async (req, res, next) => {
         RETURNING *
       `;
             result = await db.query(insertQuery, [
-                id,
-                productId,
+                cartId,
+                product.id,
                 quantity,
                 product.price,
             ]);
         }
 
-        const fullCart = await fetchCartWithItems(id);
+        const fullCart = await fetchCartWithItems(cartId);
         res.status(201).json({ data: fullCart });
     } catch (error) {
         next(error);
     }
 });
 
-// PUT /api/cart/:id/items/:itemId - Update item quantity
-router.put('/:id/items/:itemId', async (req, res, next) => {
+// PUT /api/cart/:token/items/:itemId - Update item quantity
+router.put('/:token/items/:itemId', async (req, res, next) => {
     try {
-        const { id, itemId } = req.params;
+        const { token, itemId } = req.params;
         const { quantity } = req.body;
 
         if (!quantity || quantity < 1) {
@@ -168,13 +183,26 @@ router.put('/:id/items/:itemId', async (req, res, next) => {
             });
         }
 
+        // Lookup cart by cart_token
+        const cartQuery = 'SELECT id FROM carts WHERE cart_token = $1';
+        const cartResult = await db.query(cartQuery, [token]);
+
+        if (cartResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Cart not found',
+            });
+        }
+
+        const cartId = cartResult.rows[0].id;
+
         const query = `
       UPDATE cart_items
       SET quantity = $1
       WHERE id = $2 AND cart_id = $3
       RETURNING *
     `;
-        const result = await db.query(query, [quantity, itemId, id]);
+        const result = await db.query(query, [quantity, itemId, cartId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({
@@ -183,24 +211,37 @@ router.put('/:id/items/:itemId', async (req, res, next) => {
             });
         }
 
-        const fullCart = await fetchCartWithItems(id);
+        const fullCart = await fetchCartWithItems(cartId);
         res.json({ data: fullCart });
     } catch (error) {
         next(error);
     }
 });
 
-// DELETE /api/cart/:id/items/:itemId - Remove item
-router.delete('/:id/items/:itemId', async (req, res, next) => {
+// DELETE /api/cart/:token/items/:itemId - Remove item
+router.delete('/:token/items/:itemId', async (req, res, next) => {
     try {
-        const { id, itemId } = req.params;
+        const { token, itemId } = req.params;
+
+        // Lookup cart by cart_token
+        const cartQuery = 'SELECT id FROM carts WHERE cart_token = $1';
+        const cartResult = await db.query(cartQuery, [token]);
+
+        if (cartResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Cart not found',
+            });
+        }
+
+        const cartId = cartResult.rows[0].id;
 
         const query = `
       DELETE FROM cart_items
       WHERE id = $1 AND cart_id = $2
       RETURNING *
     `;
-        const result = await db.query(query, [itemId, id]);
+        const result = await db.query(query, [itemId, cartId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({
@@ -209,7 +250,7 @@ router.delete('/:id/items/:itemId', async (req, res, next) => {
             });
         }
 
-        const fullCart = await fetchCartWithItems(id);
+        const fullCart = await fetchCartWithItems(cartId);
         res.json({ data: fullCart });
     } catch (error) {
         next(error);
@@ -220,23 +261,37 @@ router.delete('/:id/items/:itemId', async (req, res, next) => {
 router.post('/merge', async (req, res, next) => {
     const client = await db.getClient();
     try {
-        const { guestCartId, userId } = req.body;
+        const { guestCartToken, userId } = req.body;
 
-        if (!guestCartId || !userId) {
+        if (!guestCartToken || !userId) {
             return res.status(400).json({
                 error: 'Bad Request',
-                message: 'guestCartId and userId are required',
+                message: 'guestCartToken and userId are required',
             });
         }
 
         await client.query('BEGIN');
 
-        // 1. Get user's existing cart
+        // 1. Get guest cart by token
+        const guestCartQuery = 'SELECT id FROM carts WHERE cart_token = $1';
+        const guestCartResult = await client.query(guestCartQuery, [guestCartToken]);
+
+        if (guestCartResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Guest cart not found',
+            });
+        }
+
+        const guestCartId = guestCartResult.rows[0].id;
+
+        // 2. Get user's existing cart
         const userCartQuery = 'SELECT id FROM carts WHERE user_id = $1';
         const userCartResult = await client.query(userCartQuery, [userId]);
         const userCart = userCartResult.rows[0];
 
-        // 2. Get guest cart items
+        // 3. Get guest cart items
         const guestItemsQuery = 'SELECT * FROM cart_items WHERE cart_id = $1';
         const guestItemsResult = await client.query(guestItemsQuery, [guestCartId]);
         const guestItems = guestItemsResult.rows;
