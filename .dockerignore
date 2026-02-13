@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.agents
+.agent
+.tmp
+*.log
+dist
+build
+docker-compose.yml
+Dockerfile
+.dockerignore

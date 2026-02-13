@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: avella_user
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+      - ./database/migrations/002_redesign_primary_keys.sql:/docker-entrypoint-initdb.d/001_redesign_primary_keys.sql
       - ./database/seeds/002_seed_categories.sql:/docker-entrypoint-initdb.d/002_seed_categories.sql
       - ./database/seeds/003_seed_products.sql:/docker-entrypoint-initdb.d/003_seed_products.sql
       - postgres_data:/var/lib/postgresql/data
