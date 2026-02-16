@@ -15,14 +15,6 @@ const cartRoutes = require('./routes/cart');
 const ordersRoutes = require('./routes/orders');
 const authRoutes = require('./routes/auth');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-// Middleware
-app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    credentials: true,
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -61,6 +53,7 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/customers', customersRoutes);
 
 // 404 handler
 app.use((req, res) => {

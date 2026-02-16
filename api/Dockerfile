@@ -7,9 +7,14 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
+# Install build tools for native modules
+RUN apk add --no-cache python3 make g++
+
 # Copy package files
 COPY package*.json ./
 RUN npm install
+# Rebuild native modules for Alpine Linux
+RUN npm rebuild bcrypt --build-from-source
 
 # Development image
 FROM base AS development

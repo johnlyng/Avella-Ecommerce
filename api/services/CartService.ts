@@ -76,6 +76,7 @@ class CartService {
 
         return {
             ...cart,
+            cart_token: cart.cartToken, // Frontend expects snake_case
             items,
             ...totals
         };

@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, decimal, integer, timestamp, boolean, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, text, decimal, integer, timestamp, boolean, uuid, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core';
 
 // Categories table
 export const categories = pgTable('categories', {
@@ -6,17 +6,20 @@ export const categories = pgTable('categories', {
     name: varchar('name', { length: 100 }).notNull(),
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     description: text('description'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull()
+    parentId: integer('parent_id').references((): AnyPgColumn => categories.id),
+    imageUrl: varchar('image_url', { length: 500 }),
+    createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 // Users table
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
+    uuid: uuid('uuid').defaultRandom().notNull().unique(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     firstName: varchar('first_name', { length: 100 }),
     lastName: varchar('last_name', { length: 100 }),
+    role: varchar('role', { length: 20 }).default('customer'),
     phoneNumber: varchar('phone_number', { length: 20 }),
     address: text('address'),
     city: varchar('city', { length: 100 }),
@@ -33,10 +36,12 @@ export const products = pgTable('products', {
     slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+    compareAtPrice: decimal('compare_at_price', { precision: 10, scale: 2 }),
     stockQuantity: integer('stock_quantity').notNull().default(0),
     sku: varchar('sku', { length: 100 }).unique(),
-    categoryId: integer('category_id').references(() => categories.id),
-    imageUrl: varchar('image_url', { length: 500 }),
+    categoryId: integer('category_id').references((): AnyPgColumn => categories.id),
+    images: jsonb('images').default([]),
+    specifications: jsonb('specifications').default({}),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull()
@@ -59,24 +64,21 @@ export const cartItems = pgTable('cart_items', {
     productId: integer('product_id').references(() => products.id).notNull(),
     quantity: integer('quantity').notNull().default(1),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull()
+    createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 // Orders table
 export const orders = pgTable('orders', {
     id: serial('id').primaryKey(),
     orderNumber: varchar('order_number', { length: 50 }).notNull().unique(),
-    userId: integer('user_id').references(() => users.id).notNull(),
+    userId: integer('user_id').references((): AnyPgColumn => users.id), // Nullable in SQL (ON DELETE SET NULL), removed .notNull()
     status: varchar('status', { length: 50 }).notNull().default('pending'),
     subtotal: decimal('subtotal', { precision: 10, scale: 2 }).notNull(),
     tax: decimal('tax', { precision: 10, scale: 2 }).notNull(),
-    shippingCost: decimal('shipping_cost', { precision: 10, scale: 2 }).notNull().default('0'),
+    shippingCost: decimal('shipping', { precision: 10, scale: 2 }).notNull().default('0'),
     total: decimal('total', { precision: 10, scale: 2 }).notNull(),
-    shippingAddress: text('shipping_address'),
-    shippingCity: varchar('shipping_city', { length: 100 }),
-    shippingPostalCode: varchar('shipping_postal_code', { length: 20 }),
-    shippingCountry: varchar('shipping_country', { length: 100 }),
+    shippingAddress: jsonb('shipping_address'),
+    billingAddress: jsonb('billing_address'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
@@ -90,6 +92,7 @@ export const orderItems = pgTable('order_items', {
     productSku: varchar('product_sku', { length: 100 }).notNull(),
     quantity: integer('quantity').notNull(),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+    total: decimal('total', { precision: 10, scale: 2 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull()
 });
 

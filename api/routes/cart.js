@@ -10,7 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const { validate } = require('../middleware/validation');
-const cartService = require('../services/CartService');
+const cartService = require('../services/CartService').default;
 
 // POST /api/cart - Create new cart
 router.post('/', validate('createCart'), async (req, res, next) => {
