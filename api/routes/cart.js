@@ -8,34 +8,15 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { validate } = require('../middleware/validation');
+const { calculateCartTotals } = require('../services/cartCalculator');
 
-// Helper to calculate cart totals
-async function calculateCartTotals(cartId) {
-    const query = `
-    SELECT 
-      SUM(ci.quantity * ci.price) as subtotal
-    FROM cart_items ci
-    WHERE ci.cart_id = $1
-  `;
-    const result = await db.query(query, [cartId]);
-    const subtotal = parseFloat(result.rows[0].subtotal || 0);
-    const tax = subtotal * 0.1; // 10% tax (configurable)
-    const total = subtotal + tax;
-
-    return { subtotal, tax, total };
-}
+// Note: calculateCartTotals moved to services/cartCalculator.js
 
 // POST /api/cart - Create new cart
-router.post('/', async (req, res, next) => {
+router.post('/', validate('createCart'), async (req, res, next) => {
     try {
         const { userId, sessionId } = req.body;
-
-        if (!userId && !sessionId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'Either userId or sessionId is required',
-            });
-        }
 
         const query = `
             INSERT INTO carts (user_id, session_id)
@@ -77,7 +58,7 @@ router.get('/:token', async (req, res, next) => {
 });
 
 // POST /api/cart/:token/items - Add item to cart (accepts productSlug)
-router.post('/:token/items', async (req, res, next) => {
+router.post('/:token/items', validate('addToCart'), async (req, res, next) => {
     try {
         const { token } = req.params;
         const { productSlug, productId, quantity = 1 } = req.body;
