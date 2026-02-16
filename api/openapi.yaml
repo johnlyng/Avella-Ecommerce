@@ -33,6 +33,8 @@ tags:
     description: Order processing
   - name: Authentication
     description: User authentication
+  - name: Customers
+    description: Customer management operations
 
 paths:
   /products:
@@ -77,6 +79,13 @@ paths:
           schema:
             type: integer
             default: 0
+        - name: sort
+          in: query
+          description: Sort results
+          schema:
+            type: string
+            enum: [price_asc, price_desc, newest]
+          example: newest
       responses:
         '200':
           description: Successful response
@@ -115,6 +124,81 @@ paths:
                     $ref: '#/components/schemas/Product'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /products:
+    post:
+      tags: [Products]
+      summary: Create product
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created
+
+  /products/{id}/inventory:
+    patch:
+      tags: [Products]
+      summary: Update stock unit
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity: { type: integer }
+      responses:
+        '200':
+          description: Stock updated
+
+  /products/{id}:
+    put:
+      tags: [Products]
+      summary: Update product
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Product updated
+    
+    delete:
+      tags: [Products]
+      summary: Delete product
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Product deleted
   
   /categories:
     get:
@@ -344,6 +428,26 @@ paths:
                     $ref: '#/components/schemas/CartWithItems'
   
   /orders:
+    get:
+      tags: [Orders]
+      summary: List user orders
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
     post:
       tags: [Orders]
       summary: Create order from cart
@@ -380,6 +484,60 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
   
+  /orders/external:
+    post:
+      tags: [Orders]
+      summary: Create order directly (External)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderNumber, total, items, shippingAddress]
+              properties:
+                orderNumber: { type: string }
+                total: { type: number }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productName: { type: string }
+                      quantity: { type: integer }
+                      price: { type: number }
+                shippingAddress: { $ref: '#/components/schemas/Address' }
+      responses:
+        '201':
+          description: Order created
+
+  /orders/{id}/status:
+    patch:
+      tags: [Orders]
+      summary: Update order status
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [pending, processing, shipped, delivered, cancelled] }
+                trackingNumber: { type: string }
+      responses:
+        '200':
+          description: Status updated
+  
   /orders/{orderNumber}:
     get:
       tags: [Orders]
@@ -404,7 +562,52 @@ paths:
                     $ref: '#/components/schemas/OrderWithItems'
         '404':
           $ref: '#/components/responses/NotFound'
-  
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List all customers
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    post:
+      tags: [Customers]
+      summary: Create customer directly
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+                firstName: { type: string }
+                lastName: { type: string }
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/User' }
+
   /auth/register:
     post:
       tags: [Authentication]
@@ -774,6 +977,21 @@ components:
           type: array
           items:
             type: object
+
+    ProductInput:
+      type: object
+      required: [name, slug, price, categoryId]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        price: { type: number, format: decimal }
+        sku: { type: string }
+        categoryId: { type: integer }
+        stockQuantity: { type: integer }
+        images: { type: array, items: { type: string, format: uri } }
+        specifications: { type: object }
+        isActive: { type: boolean }
   
   responses:
     NotFound:
@@ -802,3 +1020,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key

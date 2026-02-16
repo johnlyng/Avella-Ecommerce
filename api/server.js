@@ -14,7 +14,12 @@ const categoriesRoutes = require('./routes/categories');
 const cartRoutes = require('./routes/cart');
 const ordersRoutes = require('./routes/orders');
 const authRoutes = require('./routes/auth');
+const customersRoutes = require('./routes/customers');
 
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
