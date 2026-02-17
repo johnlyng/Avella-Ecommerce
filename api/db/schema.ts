@@ -2,7 +2,7 @@ import { pgTable, serial, varchar, text, decimal, integer, timestamp, boolean, u
 
 // Categories table
 export const categories = pgTable('categories', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     name: varchar('name', { length: 100 }).notNull(),
     slug: varchar('slug', { length: 100 }).notNull().unique(),
     description: text('description'),
@@ -13,7 +13,7 @@ export const categories = pgTable('categories', {
 
 // Users table
 export const users = pgTable('users', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     uuid: uuid('uuid').defaultRandom().notNull().unique(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
@@ -31,7 +31,7 @@ export const users = pgTable('users', {
 
 // Products table
 export const products = pgTable('products', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
@@ -49,7 +49,7 @@ export const products = pgTable('products', {
 
 // Carts table
 export const carts = pgTable('carts', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     cartToken: uuid('cart_token').defaultRandom().notNull().unique(),
     userId: integer('user_id').references(() => users.id),
     sessionId: varchar('session_id', { length: 255 }),
@@ -59,7 +59,7 @@ export const carts = pgTable('carts', {
 
 // Cart Items table
 export const cartItems = pgTable('cart_items', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     cartId: integer('cart_id').references(() => carts.id).notNull(),
     productId: integer('product_id').references(() => products.id).notNull(),
     quantity: integer('quantity').notNull().default(1),
@@ -69,7 +69,7 @@ export const cartItems = pgTable('cart_items', {
 
 // Orders table
 export const orders = pgTable('orders', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     orderNumber: varchar('order_number', { length: 50 }).notNull().unique(),
     userId: integer('user_id').references((): AnyPgColumn => users.id), // Nullable in SQL (ON DELETE SET NULL), removed .notNull()
     status: varchar('status', { length: 50 }).notNull().default('pending'),
@@ -85,7 +85,7 @@ export const orders = pgTable('orders', {
 
 // Order Items table
 export const orderItems = pgTable('order_items', {
-    id: serial('id').primaryKey(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     orderId: integer('order_id').references(() => orders.id).notNull(),
     productId: integer('product_id').references(() => products.id).notNull(),
     productName: varchar('product_name', { length: 255 }).notNull(),
@@ -94,6 +94,25 @@ export const orderItems = pgTable('order_items', {
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     total: decimal('total', { precision: 10, scale: 2 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Addresses table
+export const addresses = pgTable('addresses', {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    type: varchar('type', { length: 50 }).default('shipping'),
+    firstName: varchar('first_name', { length: 100 }), // Optional
+    lastName: varchar('last_name', { length: 100 }),   // Optional
+    addressLine1: varchar('address_line1', { length: 255 }).notNull(),
+    addressLine2: varchar('address_line2', { length: 255 }),
+    city: varchar('city', { length: 100 }).notNull(),
+    state: varchar('state', { length: 100 }),
+    postalCode: varchar('postal_code', { length: 20 }).notNull(),
+    country: varchar('country', { length: 100 }).notNull(),
+    phoneNumber: varchar('phone_number', { length: 20 }),
+    isDefault: boolean('is_default').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
 // Type exports for TypeScript
@@ -117,3 +136,6 @@ export type NewOrder = typeof orders.$inferInsert;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
+
+export type Address = typeof addresses.$inferSelect;
+export type NewAddress = typeof addresses.$inferInsert;

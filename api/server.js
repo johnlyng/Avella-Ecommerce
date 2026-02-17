@@ -15,6 +15,7 @@ const cartRoutes = require('./routes/cart');
 const ordersRoutes = require('./routes/orders');
 const authRoutes = require('./routes/auth');
 const customersRoutes = require('./routes/customers');
+const addressesRoutes = require('./routes/addresses');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -59,6 +60,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customersRoutes);
+app.use('/api/addresses', addressesRoutes);
 
 // 404 handler
 app.use((req, res) => {
