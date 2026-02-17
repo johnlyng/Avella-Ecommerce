@@ -79,30 +79,7 @@ export class ProductService {
         const total = totalResult ? Number(totalResult.count) : 0;
 
         return {
-            data: data.map(row => {
-                const images = (row.product.images as string[]) || [];
-                const imageUrl = images.length > 0 ? images[0] : null;
-
-                return {
-                    id: row.product.id,
-                    name: row.product.name,
-                    slug: row.product.slug,
-                    description: row.product.description,
-                    price: Number(row.product.price),
-                    compare_at_price: row.product.compareAtPrice ? Number(row.product.compareAtPrice) : null,
-                    stock_quantity: row.product.stockQuantity,
-                    sku: row.product.sku,
-                    category_id: row.product.categoryId,
-                    images: row.product.images,
-                    imageUrl,
-                    specifications: row.product.specifications,
-                    is_active: row.product.isActive,
-                    created_at: row.product.createdAt,
-                    updated_at: row.product.updatedAt,
-                    category_name: row.categoryName,
-                    category_slug: row.categorySlug,
-                };
-            }),
+            data: data.map(row => this._mapProduct(row.product, row.categoryName || undefined, row.categorySlug || undefined)),
             pagination: {
                 total,
                 limit,
@@ -129,28 +106,7 @@ export class ProductService {
         }
 
         const row = result[0];
-        const images = (row.product.images as string[]) || [];
-        const imageUrl = images.length > 0 ? images[0] : null;
-
-        return {
-            id: row.product.id,
-            name: row.product.name,
-            slug: row.product.slug,
-            description: row.product.description,
-            price: Number(row.product.price),
-            compare_at_price: row.product.compareAtPrice ? Number(row.product.compareAtPrice) : null,
-            stock_quantity: row.product.stockQuantity,
-            sku: row.product.sku,
-            category_id: row.product.categoryId,
-            images: row.product.images,
-            imageUrl,
-            specifications: row.product.specifications,
-            is_active: row.product.isActive,
-            created_at: row.product.createdAt,
-            updated_at: row.product.updatedAt,
-            category_name: row.categoryName,
-            category_slug: row.categorySlug,
-        };
+        return this._mapProduct(row.product, row.categoryName || undefined, row.categorySlug || undefined);
     }
 
     async updateStock(productId: number, quantity: number) {
@@ -168,15 +124,31 @@ export class ProductService {
         }
 
         // Return mapped to snake_case
+        return this._mapProduct(updatedProduct);
+    }
+
+    private _mapProduct(product: Product, categoryName?: string, categorySlug?: string) {
+        const images = (product.images as string[]) || [];
+        const imageUrl = images.length > 0 ? images[0] : null;
+
         return {
-            ...updatedProduct,
-            compare_at_price: updatedProduct.compareAtPrice ? Number(updatedProduct.compareAtPrice) : null,
-            stock_quantity: updatedProduct.stockQuantity,
-            category_id: updatedProduct.categoryId,
-            is_active: updatedProduct.isActive,
-            created_at: updatedProduct.createdAt,
-            updated_at: updatedProduct.updatedAt,
-            price: Number(updatedProduct.price)
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            description: product.description,
+            price: Number(product.price),
+            compare_at_price: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+            stock_quantity: product.stockQuantity,
+            sku: product.sku,
+            category_id: product.categoryId,
+            images: product.images,
+            imageUrl,
+            specifications: product.specifications,
+            is_active: product.isActive,
+            created_at: product.createdAt,
+            updated_at: product.updatedAt,
+            category_name: categoryName,
+            category_slug: categorySlug,
         };
     }
 
@@ -185,7 +157,7 @@ export class ProductService {
             .insert(products)
             .values(data)
             .returning();
-        return newProduct;
+        return this._mapProduct(newProduct);
     }
 
     async updateProduct(id: number, data: Partial<NewProduct>) {
@@ -198,7 +170,7 @@ export class ProductService {
         if (!updatedProduct) {
             throw new Error(`Product with ID ${id} not found`);
         }
-        return updatedProduct;
+        return this._mapProduct(updatedProduct);
     }
 
     async deleteProduct(id: number) {
@@ -211,7 +183,7 @@ export class ProductService {
         if (!deletedProduct) {
             throw new Error(`Product with ID ${id} not found`);
         }
-        return deletedProduct;
+        return this._mapProduct(deletedProduct);
     }
 }
 

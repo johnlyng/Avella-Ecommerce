@@ -38,7 +38,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         setIsLoading(true)
         try {
-            await addToCart(product.id)
+            await addToCart(product.slug)
             setIsAdded(true)
             setTimeout(() => setIsAdded(false), 2000)
         } catch (error) {
