@@ -7,6 +7,7 @@ import {
     carts,
     cartItems,
     products,
+    inventoryLevels,
     type NewOrder,
     type NewOrderItem
 } from '../db/schema';
@@ -44,17 +45,23 @@ export class OrderService {
             const orderItemsData: NewOrderItem[] = [];
 
             for (const item of items) {
-                const [product] = await tx
-                    .select()
+                const [productData] = await tx
+                    .select({
+                        product: products,
+                        stockQuantity: inventoryLevels.quantity
+                    })
                     .from(products)
+                    .leftJoin(inventoryLevels, eq(products.id, inventoryLevels.productId))
                     .where(eq(products.slug, item.productSlug))
                     .limit(1);
 
-                if (!product) {
+                if (!productData) {
                     throw new Error(`Product with slug '${item.productSlug}' not found`);
                 }
 
-                if (product.stockQuantity < item.quantity) {
+                const { product, stockQuantity } = productData;
+
+                if ((stockQuantity ?? 0) < item.quantity) {
                     throw new Error(`${product.name} has insufficient stock`);
                 }
 
@@ -101,9 +108,9 @@ export class OrderService {
                 await tx.insert(orderItems).values(item);
 
                 await tx
-                    .update(products)
-                    .set({ stockQuantity: sql`${products.stockQuantity} - ${item.quantity}` })
-                    .where(eq(products.id, item.productId));
+                    .update(inventoryLevels)
+                    .set({ quantity: sql`${inventoryLevels.quantity} - ${item.quantity}` })
+                    .where(eq(inventoryLevels.productId, item.productId));
             }
 
             return {
@@ -167,10 +174,12 @@ export class OrderService {
             const items = await tx
                 .select({
                     cartItem: cartItems,
-                    product: products
+                    product: products,
+                    stockQuantity: inventoryLevels.quantity
                 })
                 .from(cartItems)
                 .innerJoin(products, eq(cartItems.productId, products.id))
+                .leftJoin(inventoryLevels, eq(products.id, inventoryLevels.productId))
                 .where(eq(cartItems.cartId, cart.id));
 
             if (items.length === 0) {
@@ -181,8 +190,8 @@ export class OrderService {
             let subtotal = 0;
             const orderItemsData: NewOrderItem[] = [];
 
-            for (const { cartItem, product } of items) {
-                if (product.stockQuantity < cartItem.quantity) {
+            for (const { cartItem, product, stockQuantity } of items) {
+                if ((stockQuantity ?? 0) < cartItem.quantity) {
                     throw new Error(`${product.name} has insufficient stock`);
                 }
 
@@ -231,9 +240,9 @@ export class OrderService {
 
                 // Update stock
                 await tx
-                    .update(products)
-                    .set({ stockQuantity: sql`${products.stockQuantity} - ${item.quantity}` })
-                    .where(eq(products.id, item.productId));
+                    .update(inventoryLevels)
+                    .set({ quantity: sql`${inventoryLevels.quantity} - ${item.quantity}` })
+                    .where(eq(inventoryLevels.productId, item.productId));
             }
 
             // 6. Clear Cart

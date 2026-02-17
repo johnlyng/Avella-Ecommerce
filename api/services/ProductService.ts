@@ -1,6 +1,6 @@
 import { eq, and, sql, desc, ilike, gte, lte, count } from 'drizzle-orm';
 import { db } from '../db';
-import { products, categories, type Product, type NewProduct } from '../db/schema';
+import { products, categories, inventoryLevels, type Product, type NewProduct } from '../db/schema';
 
 export class ProductService {
     async getProducts(params: {
@@ -30,9 +30,11 @@ export class ProductService {
                 product: products,
                 categoryName: categories.name,
                 categorySlug: categories.slug,
+                stockQuantity: inventoryLevels.quantity,
             })
             .from(products)
             .leftJoin(categories, eq(products.categoryId, categories.id))
+            .leftJoin(inventoryLevels, eq(products.id, inventoryLevels.productId))
             .$dynamic();
 
         if (category) {
@@ -79,7 +81,7 @@ export class ProductService {
         const total = totalResult ? Number(totalResult.count) : 0;
 
         return {
-            data: data.map(row => this._mapProduct(row.product, row.categoryName || undefined, row.categorySlug || undefined)),
+            data: data.map(row => this._mapProduct(row.product, row.stockQuantity, row.categoryName || undefined, row.categorySlug || undefined)),
             pagination: {
                 total,
                 limit,
@@ -95,9 +97,11 @@ export class ProductService {
                 product: products,
                 categoryName: categories.name,
                 categorySlug: categories.slug,
+                stockQuantity: inventoryLevels.quantity,
             })
             .from(products)
             .leftJoin(categories, eq(products.categoryId, categories.id))
+            .leftJoin(inventoryLevels, eq(products.id, inventoryLevels.productId))
             .where(and(eq(products.slug, slug), eq(products.isActive, true)))
             .limit(1);
 
@@ -106,28 +110,57 @@ export class ProductService {
         }
 
         const row = result[0];
-        return this._mapProduct(row.product, row.categoryName || undefined, row.categorySlug || undefined);
+        return this._mapProduct(row.product, row.stockQuantity, row.categoryName || undefined, row.categorySlug || undefined);
     }
 
     async updateStock(productId: number, quantity: number) {
-        const [updatedProduct] = await db
-            .update(products)
+        // Update inventory_levels
+        const [updatedInventory] = await db
+            .update(inventoryLevels)
             .set({
-                stockQuantity: quantity,
+                quantity: quantity,
                 updatedAt: new Date()
             })
-            .where(eq(products.id, productId))
+            .where(eq(inventoryLevels.productId, productId))
             .returning();
 
-        if (!updatedProduct) {
-            throw new Error(`Product with ID ${productId} not found`);
+        if (!updatedInventory) {
+            // If no inventory record exists (edge case), create one
+            const [newInventory] = await db.insert(inventoryLevels).values({
+                productId,
+                quantity,
+                locationId: 'default'
+            }).returning();
+
+            if (!newInventory) throw new Error(`Could not update stock for product ${productId}`);
         }
 
-        // Return mapped to snake_case
-        return this._mapProduct(updatedProduct);
+        // Fetch product to return mapped object
+        // Recursion risk if we call getProductById? calling getProductBySlug needs slug.
+        // Let's just fetch the product directly.
+        return this.getProductById(productId);
     }
 
-    private _mapProduct(product: Product, categoryName?: string, categorySlug?: string) {
+    async getProductById(id: number) {
+        const result = await db
+            .select({
+                product: products,
+                categoryName: categories.name,
+                categorySlug: categories.slug,
+                stockQuantity: inventoryLevels.quantity,
+            })
+            .from(products)
+            .leftJoin(categories, eq(products.categoryId, categories.id))
+            .leftJoin(inventoryLevels, eq(products.id, inventoryLevels.productId))
+            .where(eq(products.id, id))
+            .limit(1);
+
+        if (result.length === 0) return null;
+        const row = result[0];
+        return this._mapProduct(row.product, row.stockQuantity, row.categoryName || undefined, row.categorySlug || undefined);
+    }
+
+    private _mapProduct(product: Product, stockQuantity: number | null, categoryName?: string, categorySlug?: string) {
         const images = (product.images as string[]) || [];
         const imageUrl = images.length > 0 ? images[0] : null;
 
@@ -138,7 +171,7 @@ export class ProductService {
             description: product.description,
             price: Number(product.price),
             compare_at_price: product.compareAtPrice ? Number(product.compareAtPrice) : null,
-            stock_quantity: product.stockQuantity,
+            stock_quantity: stockQuantity ?? 0,
             sku: product.sku,
             category_id: product.categoryId,
             images: product.images,
@@ -153,11 +186,22 @@ export class ProductService {
     }
 
     async createProduct(data: NewProduct) {
-        const [newProduct] = await db
-            .insert(products)
-            .values(data)
-            .returning();
-        return this._mapProduct(newProduct);
+        // Transaction to create product AND inventory
+        return await db.transaction(async (tx) => {
+            const [newProduct] = await tx
+                .insert(products)
+                .values(data)
+                .returning();
+
+            // Create default inventory
+            await tx.insert(inventoryLevels).values({
+                productId: newProduct.id,
+                quantity: 0, // Default 0
+                locationId: 'default'
+            });
+
+            return this._mapProduct(newProduct, 0);
+        });
     }
 
     async updateProduct(id: number, data: Partial<NewProduct>) {
@@ -170,7 +214,11 @@ export class ProductService {
         if (!updatedProduct) {
             throw new Error(`Product with ID ${id} not found`);
         }
-        return this._mapProduct(updatedProduct);
+
+        // Fetch fresh quantity
+        const [inv] = await db.select().from(inventoryLevels).where(eq(inventoryLevels.productId, id));
+
+        return this._mapProduct(updatedProduct, inv?.quantity ?? 0);
     }
 
     async deleteProduct(id: number) {
@@ -183,7 +231,9 @@ export class ProductService {
         if (!deletedProduct) {
             throw new Error(`Product with ID ${id} not found`);
         }
-        return this._mapProduct(deletedProduct);
+        // Fetch last known quantity (though product is logically deleted)
+        const [inv] = await db.select().from(inventoryLevels).where(eq(inventoryLevels.productId, id));
+        return this._mapProduct(deletedProduct, inv?.quantity ?? 0);
     }
 }
 

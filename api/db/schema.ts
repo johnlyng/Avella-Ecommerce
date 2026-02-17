@@ -37,13 +37,23 @@ export const products = pgTable('products', {
     description: text('description'),
     price: decimal('price', { precision: 10, scale: 2 }).notNull(),
     compareAtPrice: decimal('compare_at_price', { precision: 10, scale: 2 }),
-    stockQuantity: integer('stock_quantity').notNull().default(0),
+    // stockQuantity removed, moved to inventory_levels
     sku: varchar('sku', { length: 100 }).unique(),
     categoryId: integer('category_id').references((): AnyPgColumn => categories.id),
     images: jsonb('images').default([]),
     specifications: jsonb('specifications').default({}),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Inventory Levels table (New)
+export const inventoryLevels = pgTable('inventory_levels', {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    productId: integer('product_id').references(() => products.id).notNull(),
+    quantity: integer('quantity').notNull().default(0),
+    reserved: integer('reserved').default(0),
+    locationId: varchar('location_id', { length: 50 }).notNull().default('default'),
     updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
@@ -71,7 +81,7 @@ export const cartItems = pgTable('cart_items', {
 export const orders = pgTable('orders', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     orderNumber: varchar('order_number', { length: 50 }).notNull().unique(),
-    userId: integer('user_id').references((): AnyPgColumn => users.id), // Nullable in SQL (ON DELETE SET NULL), removed .notNull()
+    userId: integer('user_id').references((): AnyPgColumn => users.id), // Nullable in SQL (ON DELETE SET NULL)
     status: varchar('status', { length: 50 }).notNull().default('pending'),
     subtotal: decimal('subtotal', { precision: 10, scale: 2 }).notNull(),
     tax: decimal('tax', { precision: 10, scale: 2 }).notNull(),
@@ -124,6 +134,9 @@ export type NewUser = typeof users.$inferInsert;
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+
+export type InventoryLevel = typeof inventoryLevels.$inferSelect;
+export type NewInventoryLevel = typeof inventoryLevels.$inferInsert;
 
 export type Cart = typeof carts.$inferSelect;
 export type NewCart = typeof carts.$inferInsert;
