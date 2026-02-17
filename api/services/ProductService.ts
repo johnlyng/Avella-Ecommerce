@@ -25,8 +25,6 @@ export class ProductService {
         // Base conditions
         const conditions = [eq(products.isActive, true)];
 
-        // Joins are handled by Drizzle's query builder or explicit joins
-        // Since we want category info, we'll use a left join logic or query builder query
         let query = db
             .select({
                 product: products,
@@ -35,7 +33,7 @@ export class ProductService {
             })
             .from(products)
             .leftJoin(categories, eq(products.categoryId, categories.id))
-            .$dynamic(); // Enable dynamic query building
+            .$dynamic();
 
         if (category) {
             conditions.push(eq(categories.slug, category));
@@ -71,8 +69,6 @@ export class ProductService {
         // Apply pagination
         const data = await query.limit(limit).offset(offset);
 
-        // Get total count (simplified, ideally strictly separate query for performance)
-        // Re-using conditions for count query
         const countQuery = db
             .select({ count: count() })
             .from(products)
@@ -80,17 +76,29 @@ export class ProductService {
             .where(and(...conditions));
 
         const [totalResult] = await countQuery;
-        const total = totalResult ? totalResult.count : 0;
+        const total = totalResult ? Number(totalResult.count) : 0;
 
         return {
             data: data.map(row => {
-                // Map first image to imageUrl for backward compatibility
                 const images = (row.product.images as string[]) || [];
                 const imageUrl = images.length > 0 ? images[0] : null;
 
                 return {
-                    ...row.product,
+                    id: row.product.id,
+                    name: row.product.name,
+                    slug: row.product.slug,
+                    description: row.product.description,
+                    price: Number(row.product.price),
+                    compare_at_price: row.product.compareAtPrice ? Number(row.product.compareAtPrice) : null,
+                    stock_quantity: row.product.stockQuantity,
+                    sku: row.product.sku,
+                    category_id: row.product.categoryId,
+                    images: row.product.images,
                     imageUrl,
+                    specifications: row.product.specifications,
+                    is_active: row.product.isActive,
+                    created_at: row.product.createdAt,
+                    updated_at: row.product.updatedAt,
                     category_name: row.categoryName,
                     category_slug: row.categorySlug,
                 };
@@ -125,15 +133,51 @@ export class ProductService {
         const imageUrl = images.length > 0 ? images[0] : null;
 
         return {
-            ...row.product,
+            id: row.product.id,
+            name: row.product.name,
+            slug: row.product.slug,
+            description: row.product.description,
+            price: Number(row.product.price),
+            compare_at_price: row.product.compareAtPrice ? Number(row.product.compareAtPrice) : null,
+            stock_quantity: row.product.stockQuantity,
+            sku: row.product.sku,
+            category_id: row.product.categoryId,
+            images: row.product.images,
             imageUrl,
+            specifications: row.product.specifications,
+            is_active: row.product.isActive,
+            created_at: row.product.createdAt,
+            updated_at: row.product.updatedAt,
             category_name: row.categoryName,
             category_slug: row.categorySlug,
         };
     }
 
     async updateStock(productId: number, quantity: number) {
-        // ... (existing code)
+        const [updatedProduct] = await db
+            .update(products)
+            .set({
+                stockQuantity: quantity,
+                updatedAt: new Date()
+            })
+            .where(eq(products.id, productId))
+            .returning();
+
+        if (!updatedProduct) {
+            throw new Error(`Product with ID ${productId} not found`);
+        }
+
+        // Return mapped to snake_case
+        return {
+            ...updatedProduct,
+            compare_at_price: updatedProduct.compareAtPrice ? Number(updatedProduct.compareAtPrice) : null,
+            stock_quantity: updatedProduct.stockQuantity,
+            category_id: updatedProduct.categoryId,
+            is_active: updatedProduct.isActive,
+            created_at: updatedProduct.createdAt,
+            updated_at: updatedProduct.updatedAt,
+            price: Number(updatedProduct.price)
+        };
     }
 
     async createProduct(data: NewProduct) {

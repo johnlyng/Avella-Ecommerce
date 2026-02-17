@@ -86,7 +86,7 @@ describe('API External Integration Endpoints', () => {
     describe('Order Management', () => {
         it('should create an external order', async () => {
             const orderData = { customerId: 1, items: [{ productId: 1, quantity: 1 }] };
-            orderService.createExternalOrder.mockResolvedValue({ id: 101, orderNumber: 'EXT-101' });
+            orderService.createExternalOrder.mockResolvedValue({ id: 101, order_number: 'EXT-101' });
 
             const res = await request(app)
                 .post('/api/orders/external')
@@ -94,7 +94,7 @@ describe('API External Integration Endpoints', () => {
                 .send(orderData);
 
             expect(res.status).toBe(201);
-            expect(res.body.data.orderNumber).toBe('EXT-101');
+            expect(res.body.data.order_number).toBe('EXT-101');
         });
 
         it('should update order status', async () => {
@@ -112,7 +112,7 @@ describe('API External Integration Endpoints', () => {
 
     describe('Product Management', () => {
         it('should update product inventory', async () => {
-            productService.updateStock.mockResolvedValue({ id: 1, stockQuantity: 50 });
+            productService.updateStock.mockResolvedValue({ id: 1, stock_quantity: 50 });
 
             const res = await request(app)
                 .patch('/api/products/1/inventory')
@@ -120,7 +120,7 @@ describe('API External Integration Endpoints', () => {
                 .send({ quantity: 50 });
 
             expect(res.status).toBe(200);
-            expect(res.body.data.stockQuantity).toBe(50);
+            expect(res.body.data.stock_quantity).toBe(50);
         });
 
         it('should create a product', async () => {

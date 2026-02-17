@@ -106,16 +106,21 @@ export class OrderService {
                     .where(eq(products.id, item.productId));
             }
 
-            return newOrder;
+            return {
+                ...newOrder,
+                order_number: newOrder.orderNumber,
+                user_id: newOrder.userId,
+                shipping_cost: newOrder.shippingCost,
+                shipping_address: newOrder.shippingAddress,
+                billing_address: newOrder.billingAddress,
+                created_at: newOrder.createdAt,
+                updated_at: newOrder.updatedAt
+            };
         });
     }
 
     async updateOrderStatus(orderId: number, status: string, trackingNumber?: string) {
         const updateData: any = { status };
-
-        // If we had a column for tracking number, we'd update it here.
-        // The schema doesn't have it yet, so we'll just update status.
-        // Note: No email notification as per user request.
 
         const [updatedOrder] = await db
             .update(orders)
@@ -127,7 +132,16 @@ export class OrderService {
             throw new Error(`Order with ID ${orderId} not found`);
         }
 
-        return updatedOrder;
+        return {
+            ...updatedOrder,
+            order_number: updatedOrder.orderNumber,
+            user_id: updatedOrder.userId,
+            shipping_cost: updatedOrder.shippingCost,
+            shipping_address: updatedOrder.shippingAddress,
+            billing_address: updatedOrder.billingAddress,
+            created_at: updatedOrder.createdAt,
+            updated_at: updatedOrder.updatedAt
+        };
     }
     async createOrder(params: {
         userId?: number | null;
@@ -225,7 +239,16 @@ export class OrderService {
             // 6. Clear Cart
             await tx.delete(cartItems).where(eq(cartItems.cartId, cart.id));
 
-            return newOrder;
+            return {
+                ...newOrder,
+                order_number: newOrder.orderNumber,
+                user_id: newOrder.userId,
+                shipping_cost: newOrder.shippingCost,
+                shipping_address: newOrder.shippingAddress,
+                billing_address: newOrder.billingAddress,
+                created_at: newOrder.createdAt,
+                updated_at: newOrder.updatedAt
+            };
         });
     }
 
@@ -243,15 +266,43 @@ export class OrderService {
             .from(orderItems)
             .where(eq(orderItems.orderId, order.id));
 
-        return { ...order, items };
+        return {
+            ...order,
+            order_number: order.orderNumber,
+            user_id: order.userId,
+            shipping_cost: order.shippingCost,
+            shipping_address: order.shippingAddress,
+            billing_address: order.billingAddress,
+            created_at: order.createdAt,
+            updated_at: order.updatedAt,
+            items: items.map(item => ({
+                ...item,
+                order_id: item.orderId,
+                product_id: item.productId,
+                product_name: item.productName,
+                product_sku: item.productSku,
+                created_at: item.createdAt
+            }))
+        };
     }
 
     async getUserOrders(userId: number) {
-        return await db
+        const result = await db
             .select()
             .from(orders)
             .where(eq(orders.userId, userId))
             .orderBy(desc(orders.createdAt));
+
+        return result.map(order => ({
+            ...order,
+            order_number: order.orderNumber,
+            user_id: order.userId,
+            shipping_cost: order.shippingCost,
+            shipping_address: order.shippingAddress,
+            billing_address: order.billingAddress,
+            created_at: order.createdAt,
+            updated_at: order.updatedAt
+        }));
     }
 }
 
