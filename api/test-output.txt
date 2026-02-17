@@ -1,0 +1,14 @@
+
+> avella-api@1.0.0 test
+> jest --verbose __tests__/unit/productMapping.test.ts --verbose
+
+PASS __tests__/unit/productMapping.test.ts (10.792 s)
+  ProductService Mapping
+    ΓêÜ should return products with snake_case keys in getProducts (15 ms)
+    ΓêÜ should return updated product with snake_case keys in updateStock (3 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
+Time:        12.259 s
+Ran all test suites matching __tests__/unit/productMapping.test.ts.

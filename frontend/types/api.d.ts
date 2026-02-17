@@ -760,6 +760,23 @@ export interface components {
             zip: string;
             country: string;
         };
+        SavedAddress: {
+            id: number;
+            userId: number;
+            type?: string;
+            firstName?: string;
+            lastName?: string;
+            addressLine1: string;
+            addressLine2?: string;
+            city: string;
+            state?: string;
+            postalCode: string;
+            country: string;
+            phoneNumber?: string;
+            isDefault: boolean;
+            createdAt: string;
+            updatedAt: string;
+        };
         User: {
             /** Format: int64 */
             id?: number;

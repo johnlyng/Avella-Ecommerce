@@ -170,10 +170,50 @@ class ApiClient {
         });
     }
 
-    async login(data: { email: string; password: string }) {
-        return this.request('/api/auth/login', {
+    // Addresses
+    async getAddresses(token: string) {
+        return this.request('/api/addresses', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+    }
+
+    async createAddress(token: string, data: any) {
+        return this.request('/api/addresses', {
             method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(data),
+        });
+    }
+
+    async updateAddress(token: string, id: number, data: any) {
+        return this.request(`/api/addresses/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteAddress(token: string, id: number) {
+        return this.request(`/api/addresses/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+    }
+
+    async setDefaultAddress(token: string, id: number) {
+        return this.request(`/api/addresses/${id}/default`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
         });
     }
 }
