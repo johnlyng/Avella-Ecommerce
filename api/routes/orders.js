@@ -6,6 +6,13 @@ const { verifyApiKey } = require('../middleware/auth');
 // POST /api/orders/external - Create order directly (API Key protected)
 router.post('/external', verifyApiKey, async (req, res, next) => {
     try {
+        const { customerId } = req.body;
+        if (!customerId) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'customerId is required'
+            });
+        }
         const order = await orderService.createExternalOrder(req.body);
         res.status(201).json({ data: order });
     } catch (error) {
