@@ -201,8 +201,15 @@ paths:
           required: true
           schema: { type: integer }
       responses:
-        '204':
+        '200':
           description: Product deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/Product' }
   
   /categories:
     get:
@@ -431,6 +438,34 @@ paths:
                   data:
                     $ref: '#/components/schemas/CartWithItems'
   
+  /cart/merge:
+    post:
+      tags: [Cart]
+      summary: Merge guest cart into user cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [guestCartToken, userId]
+              properties:
+                guestCartToken:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Cart merged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cart'
+
   /orders:
     get:
       tags: [Orders]
@@ -469,8 +504,7 @@ paths:
                   format: uuid
                   description: Cart token from cart creation
                 userId:
-                  type: integer
-                  format: int64
+                  type: string
                 shippingAddress:
                   $ref: '#/components/schemas/Address'
                 billingAddress:
@@ -500,19 +534,17 @@ paths:
           application/json:
             schema:
               type: object
-              required: [orderNumber, total, items, shippingAddress, customerId]
+              required: [items, shippingAddress, customerId]
               properties:
                 customerId: { type: integer }
-                orderNumber: { type: string }
-                total: { type: number }
                 items:
                   type: array
                   items:
                     type: object
+                    required: [productSlug, quantity]
                     properties:
-                      productName: { type: string }
+                      productSlug: { type: string }
                       quantity: { type: integer }
-                      price: { type: number }
                 shippingAddress: { $ref: '#/components/schemas/Address' }
       responses:
         '201':
