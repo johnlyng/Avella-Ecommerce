@@ -20,6 +20,7 @@ router.post(
         body('password').isLength({ min: 8 }),
         body('firstName').trim().notEmpty(),
         body('lastName').trim().notEmpty(),
+        body('companyId').optional().isInt(),
     ],
     async (req, res, next) => {
         try {
@@ -32,7 +33,7 @@ router.post(
                 });
             }
 
-            const { email, password, firstName, lastName } = req.body;
+            const { email, password, firstName, lastName, companyId } = req.body;
 
             // Check if user exists
             const existingQuery = 'SELECT * FROM users WHERE email = $1';
@@ -48,11 +49,22 @@ router.post(
             // Hash password
             const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
+            // Check if provided company exists
+            if (companyId) {
+                const companyCheck = await db.query('SELECT id FROM companies WHERE id = $1', [companyId]);
+                if (companyCheck.rows.length === 0) {
+                    return res.status(400).json({
+                        error: 'Validation Error',
+                        message: 'Provided company does not exist',
+                    });
+                }
+            }
+
             // Create user
             const createQuery = `
-        INSERT INTO users (email, password_hash, first_name, last_name, role)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, email, first_name, last_name, role, created_at
+        INSERT INTO users (email, password_hash, first_name, last_name, role, company_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, email, first_name, last_name, role, company_id as "companyId", created_at
       `;
             const result = await db.query(createQuery, [
                 email,
@@ -60,6 +72,7 @@ router.post(
                 firstName,
                 lastName,
                 'customer',
+                companyId || null,
             ]);
 
             const user = result.rows[0];

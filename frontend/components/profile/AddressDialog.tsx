@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { SavedAddress } from '@/types/api'
+import { components } from '@/types/api'
+
+type SavedAddress = components['schemas']['SavedAddress']
 import {
     Dialog,
     DialogContent,

@@ -15,6 +15,13 @@
       "when": 1771360441222,
       "tag": "0001_add_inventory_levels",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771599604191,
+      "tag": "0002_futuristic_spiral",
+      "breakpoints": true
     }
   ]
 }

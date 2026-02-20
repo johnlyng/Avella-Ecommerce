@@ -155,6 +155,12 @@ export default function RegisterPage() {
                                 Sign in
                             </Link>
                         </div>
+                        <div className="text-center text-sm mt-4 pt-4 border-t">
+                            Registering as a business?{' '}
+                            <Link href="/register/company" className="font-semibold text-primary hover:underline">
+                                Create a company account
+                            </Link>
+                        </div>
                     </CardFooter>
                 </form>
             </Card>

@@ -1,6 +1,8 @@
 'use client'
 
-import { SavedAddress } from '@/types/api'
+import { components } from '@/types/api'
+
+type SavedAddress = components['schemas']['SavedAddress']
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

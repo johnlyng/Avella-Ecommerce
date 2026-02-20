@@ -1,6 +1,6 @@
 import { eq, or, ilike, and } from 'drizzle-orm';
 import { db } from '../db';
-import { users, type NewUser, type User } from '../db/schema';
+import { users, companies, type NewUser, type User, type NewCompany } from '../db/schema';
 
 export class CustomerService {
     async getCustomers(params: {
@@ -37,9 +37,16 @@ export class CustomerService {
                 lastName: users.lastName,
                 role: users.role,
                 phoneNumber: users.phoneNumber,
-                createdAt: users.createdAt
+                createdAt: users.createdAt,
+                company: {
+                    id: companies.id,
+                    name: companies.name,
+                    vatNumber: companies.vatNumber,
+                    registrationNumber: companies.registrationNumber
+                }
             })
             .from(users)
+            .leftJoin(companies, eq(users.companyId, companies.id))
             .where(and(...conditions))
             .limit(limit)
             .offset(offset);
@@ -47,27 +54,43 @@ export class CustomerService {
         return { data };
     }
 
-    async createCustomer(data: NewUser) {
-        // Ensure role is customer
-        const customerData = {
-            ...data,
-            role: 'customer' as const
-        };
+    async createCustomer(data: NewUser & { company?: NewCompany }) {
+        const { company, ...userData } = data;
 
-        const [newUser] = await db
-            .insert(users)
-            .values(customerData)
-            .returning({
-                id: users.id,
-                uuid: users.uuid,
-                email: users.email,
-                firstName: users.firstName,
-                lastName: users.lastName,
-                role: users.role,
-                createdAt: users.createdAt
-            });
+        return await db.transaction(async (tx) => {
+            let companyId: number | undefined;
 
-        return newUser;
+            if (company && company.name) {
+                const [newCompany] = await tx
+                    .insert(companies)
+                    .values(company)
+                    .returning({ id: companies.id });
+                companyId = newCompany.id;
+            }
+
+            // Ensure role is customer
+            const customerData = {
+                ...userData,
+                role: 'customer' as const,
+                ...(companyId ? { companyId } : {})
+            };
+
+            const [newUser] = await tx
+                .insert(users)
+                .values(customerData)
+                .returning({
+                    id: users.id,
+                    uuid: users.uuid,
+                    email: users.email,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
+                    role: users.role,
+                    createdAt: users.createdAt,
+                    companyId: users.companyId
+                });
+
+            return newUser;
+        });
     }
 }
 

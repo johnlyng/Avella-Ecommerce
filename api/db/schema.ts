@@ -11,6 +11,16 @@ export const categories = pgTable('categories', {
     createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// Companies table
+export const companies = pgTable('companies', {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    name: varchar('name', { length: 255 }).notNull(),
+    vatNumber: varchar('vat_number', { length: 50 }),
+    registrationNumber: varchar('registration_number', { length: 50 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // Users table
 export const users = pgTable('users', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
@@ -19,6 +29,7 @@ export const users = pgTable('users', {
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     firstName: varchar('first_name', { length: 100 }),
     lastName: varchar('last_name', { length: 100 }),
+    companyId: integer('company_id').references(() => companies.id),
     role: varchar('role', { length: 20 }).default('customer'),
     phoneNumber: varchar('phone_number', { length: 20 }),
     address: text('address'),
@@ -128,6 +139,9 @@ export const addresses = pgTable('addresses', {
 // Type exports for TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
+
+export type Company = typeof companies.$inferSelect;
+export type NewCompany = typeof companies.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

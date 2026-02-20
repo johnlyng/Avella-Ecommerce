@@ -163,6 +163,7 @@ class ApiClient {
         password: string;
         firstName: string;
         lastName: string;
+        companyId?: number;
     }) {
         return this.request('/api/auth/register', {
             method: 'POST',
@@ -221,6 +222,33 @@ class ApiClient {
             headers: {
                 'Authorization': `Bearer ${token}`
             },
+        });
+    }
+
+    // Companies
+    async getCompanies(search?: string) {
+        const queryParams = new URLSearchParams();
+        if (search) {
+            queryParams.append('search', search);
+        }
+        return this.request(`/api/companies?${queryParams.toString()}`);
+    }
+
+    async createCompany(data: {
+        name: string;
+        vatNumber?: string;
+        registrationNumber?: string;
+    }) {
+        return this.request('/api/companies', {
+            method: 'POST',
+            // API key might be required depending on implementation, 
+            // but we'll try without for public registration flow first.
+            // If the backend requires auth for creating companies, 
+            // we will need to adjust the backend to allow public creation, 
+            // or pass an admin key (less secure for frontend).
+            // Currently, our backend implementation is mounted plainly:
+            // app.use('/api/companies', companyRoutes) without verifyToken in app.js
+            body: JSON.stringify(data),
         });
     }
 }

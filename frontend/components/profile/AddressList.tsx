@@ -8,7 +8,9 @@ import { Plus, MapPin, Loader2 } from 'lucide-react'
 import { AddressCard } from './AddressCard'
 import { AddressDialog } from './AddressDialog'
 import { api } from '@/lib/api'
-import { SavedAddress } from '@/types/api'
+import { components } from '@/types/api'
+
+type SavedAddress = components['schemas']['SavedAddress']
 
 export function AddressList() {
     const { token } = useAuth()
