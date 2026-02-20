@@ -14,7 +14,7 @@ jest.mock('../../db', () => {
     mockQueryBuilder.offset = jest.fn().mockReturnValue(mockQueryBuilder);
     mockQueryBuilder.orderBy = jest.fn().mockReturnValue(mockQueryBuilder);
     mockQueryBuilder.$dynamic = jest.fn().mockReturnValue(mockQueryBuilder);
-    mockQueryBuilder.then = jest.fn();
+    mockQueryBuilder.then = jest.fn().mockImplementation((resolve) => Promise.resolve([{ count: 1 }]).then(resolve));
 
     return {
         db: {
@@ -67,22 +67,21 @@ describe('ProductService', () => {
 
             // Setup chain mocks to capture calls
             const whereSpy = jest.fn().mockReturnThis();
-            (db.select as jest.Mock).mockReturnValue({
-                from: jest.fn().mockReturnThis(),
-                leftJoin: jest.fn().mockReturnThis(),
-                $dynamic: jest.fn().mockReturnThis(),
-                where: whereSpy,
-                orderBy: jest.fn().mockReturnThis(),
-                limit: jest.fn().mockReturnThis(),
-                offset: jest.fn().mockResolvedValueOnce([])
-            });
-
-            // Mock count
-            (db.select as jest.Mock).mockReturnValueOnce({
-                from: jest.fn().mockReturnThis(),
-                leftJoin: jest.fn().mockReturnThis(),
-                where: jest.fn().mockResolvedValueOnce([{ count: 0 }])
-            });
+            (db.select as jest.Mock)
+                .mockReturnValueOnce({
+                    from: jest.fn().mockReturnThis(),
+                    leftJoin: jest.fn().mockReturnThis(),
+                    $dynamic: jest.fn().mockReturnThis(),
+                    where: whereSpy,
+                    orderBy: jest.fn().mockReturnThis(),
+                    limit: jest.fn().mockReturnThis(),
+                    offset: jest.fn().mockResolvedValueOnce([])
+                })
+                .mockReturnValueOnce({
+                    from: jest.fn().mockReturnThis(),
+                    leftJoin: jest.fn().mockReturnThis(),
+                    where: jest.fn().mockResolvedValueOnce([{ count: 0 }])
+                });
 
             await productService.getProducts(params);
 

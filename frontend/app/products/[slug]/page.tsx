@@ -9,9 +9,9 @@ import { ShoppingCart, Check, X } from 'lucide-react'
 import { AddToCartButton } from '@/components/AddToCartButton'
 
 interface ProductPageProps {
-    params: {
+    params: Promise<{
         slug: string
-    }
+    }>
 }
 
 export const revalidate = 60
@@ -26,7 +26,8 @@ async function getProduct(slug: string) {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-    const product = await getProduct(params.slug)
+    const resolvedParams = await params
+    const product = await getProduct(resolvedParams.slug)
 
     if (!product) {
         notFound()

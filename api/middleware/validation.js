@@ -52,7 +52,7 @@ const schemas = {
     mergeCart: z.object({
         body: z.object({
             guestCartToken: z.string().uuid(),
-            userId: z.string().min(1)
+            userId: z.union([z.string().min(1), z.number().int().positive()]).transform(Number)
         })
     }),
 

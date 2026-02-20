@@ -52,9 +52,9 @@ export default function CartPage() {
                                         <div className="text-xs text-gray-400">No Image</div>
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-lg">{item.product_name}</h3>
+                                        <h3 className="font-semibold text-lg">{item.name}</h3>
                                         {/* SKU optional */}
-                                        {item.product_sku && <p className="text-xs text-gray-500 mb-1">SKU: {item.product_sku}</p>}
+                                        {item.sku && <p className="text-xs text-gray-500 mb-1">SKU: {item.sku}</p>}
                                         <p className="text-sm font-medium text-gray-600">{formatCurrency(item.price)}</p>
 
                                         <div className="flex items-center gap-2 mt-4">

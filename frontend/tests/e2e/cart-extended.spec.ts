@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 test.describe('Extended Cart Handling', () => {
 
     test('should manage multiple unique items and correct subtotals', async ({ page }) => {
+        page.on('console', msg => console.log(msg.type(), msg.text()));
+        page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+
         await page.goto('/');
 
         // Add first product
@@ -49,8 +52,8 @@ test.describe('Extended Cart Handling', () => {
 
         // Check quantity - find row with product name and check quantity input
         const cartItem = page.locator('div.flex.gap-4').filter({ hasText: productName!.trim() });
-        const quantityInput = cartItem.locator('input[type="number"]');
-        await expect(quantityInput).toHaveValue('2');
+        const quantitySpan = cartItem.locator('span.w-12.text-center.font-medium');
+        await expect(quantitySpan).toHaveText('2');
     });
 
     test('should merge guest cart into user account on login', async ({ page }) => {
@@ -62,7 +65,7 @@ test.describe('Extended Cart Handling', () => {
         await firstProduct.getByRole('button', { name: /Add to Cart/i }).click();
         await expect(firstProduct.getByRole('button')).toHaveText(/Added!/i);
 
-        const guestCartId = await page.evaluate(() => localStorage.getItem('cartId'));
+        const guestCartId = await page.evaluate(() => localStorage.getItem('cartToken'));
         expect(guestCartId).toBeTruthy();
 
         // 2. Register/Login as a new user
@@ -83,7 +86,7 @@ test.describe('Extended Cart Handling', () => {
         await expect(page.locator('main')).toContainText(productName!.trim());
 
         // 4. Verify local storage has a valid cart ID (the merged one)
-        const userCartId = await page.evaluate(() => localStorage.getItem('cartId'));
+        const userCartId = await page.evaluate(() => localStorage.getItem('cartToken'));
         expect(userCartId).toBeTruthy();
     });
 
@@ -95,15 +98,18 @@ test.describe('Extended Cart Handling', () => {
 
         await page.goto('/cart');
 
-        const quantityInput = page.locator('input[type="number"]').first();
+        const cartItem = page.locator('div.flex.gap-4').first();
+        const plusButton = cartItem.getByRole('button').nth(1);
+
+        // Increase to 2
+        await plusButton.click();
+        await page.waitForTimeout(500); // Network wait
 
         // Increase to 3
-        await quantityInput.fill('3');
-        await quantityInput.dispatchEvent('change');
+        await plusButton.click();
 
-        // Verify totals update (check if subtotal contains the multiplied price)
-        // This is a bit data-dependent, so we just check if it's still there and count is correct
-        await expect(quantityInput).toHaveValue('3');
+        const quantitySpan = cartItem.locator('span.w-12.text-center.font-medium');
+        await expect(quantitySpan).toHaveText('3');
 
         // Verify badge
         const cartBadge = page.locator('header').getByText('3');

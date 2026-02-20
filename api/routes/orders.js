@@ -4,15 +4,15 @@ const orderService = require('../services/OrderService').default;
 const { verifyApiKey } = require('../middleware/auth');
 
 // POST /api/orders/external - Create order directly (API Key protected)
-router.post('/external', verifyApiKey, async (req, res, next) => {
+router.post('/external', verifyApiKey, async (req, res) => {
+    const { customerId } = req.body;
+    if (!customerId) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'customerId is required'
+        });
+    }
     try {
-        const { customerId } = req.body;
-        if (!customerId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'customerId is required'
-            });
-        }
         const order = await orderService.createExternalOrder(req.body);
         res.status(201).json({ data: order });
     } catch (error) {
@@ -22,23 +22,23 @@ router.post('/external', verifyApiKey, async (req, res, next) => {
                 message: error.message
             });
         }
-        next(error);
+        throw error;
     }
 });
 
 // PATCH /api/orders/:id/status - Update order status (API Key protected)
-router.patch('/:id/status', verifyApiKey, async (req, res, next) => {
+router.patch('/:id/status', verifyApiKey, async (req, res) => {
+    const { id } = req.params;
+    const { status, trackingNumber } = req.body;
+
+    if (!status) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'status is required'
+        });
+    }
+
     try {
-        const { id } = req.params;
-        const { status, trackingNumber } = req.body;
-
-        if (!status) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'status is required'
-            });
-        }
-
         const order = await orderService.updateOrderStatus(parseInt(id), status, trackingNumber);
         res.json({ data: order });
     } catch (error) {
@@ -48,27 +48,27 @@ router.patch('/:id/status', verifyApiKey, async (req, res, next) => {
                 message: error.message
             });
         }
-        next(error);
+        throw error;
     }
 });
 
 // POST /api/orders - Create order from cart
-router.post('/', async (req, res, next) => {
+router.post('/', async (req, res) => {
+    const {
+        cartToken,
+        userId,
+        shippingAddress,
+        billingAddress,
+    } = req.body;
+
+    if (!cartToken || !shippingAddress) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'cartToken and shippingAddress are required',
+        });
+    }
+
     try {
-        const {
-            cartToken,
-            userId,
-            shippingAddress,
-            billingAddress,
-        } = req.body;
-
-        if (!cartToken || !shippingAddress) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'cartToken and shippingAddress are required',
-            });
-        }
-
         const order = await orderService.createOrder({
             userId,
             cartToken,
@@ -87,47 +87,39 @@ router.post('/', async (req, res, next) => {
         if (error.message.includes('insufficient stock')) {
             return res.status(400).json({ error: 'Insufficient Stock', message: error.message });
         }
-        next(error);
+        throw error;
     }
 });
 
 // GET /api/orders/:orderNumber - Get order details
-router.get('/:orderNumber', async (req, res, next) => {
-    try {
-        const { orderNumber } = req.params;
-        const order = await orderService.getOrderByNumber(orderNumber);
+router.get('/:orderNumber', async (req, res) => {
+    const { orderNumber } = req.params;
+    const order = await orderService.getOrderByNumber(orderNumber);
 
-        if (!order) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'Order not found',
-            });
-        }
-
-        res.json({ data: order });
-    } catch (error) {
-        next(error);
+    if (!order) {
+        return res.status(404).json({
+            error: 'Not Found',
+            message: 'Order not found',
+        });
     }
+
+    res.json({ data: order });
 });
 
 // GET /api/orders - Get user orders
-router.get('/', async (req, res, next) => {
-    try {
-        const { userId } = req.query;
+router.get('/', async (req, res) => {
+    const { userId } = req.query;
 
-        if (!userId) {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: 'userId query parameter is required'
-            });
-        }
-
-        const orders = await orderService.getUserOrders(parseInt(userId));
-
-        res.json({ data: orders });
-    } catch (error) {
-        next(error);
+    if (!userId) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'userId query parameter is required'
+        });
     }
+
+    const orders = await orderService.getUserOrders(parseInt(userId));
+
+    res.json({ data: orders });
 });
 
 module.exports = router;

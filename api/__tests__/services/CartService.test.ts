@@ -44,7 +44,9 @@ describe('CartService', () => {
                         limit: jest.fn().mockResolvedValue([mockCart])
                     }),
                     innerJoin: jest.fn().mockReturnValue({
-                        where: jest.fn().mockResolvedValue([])
+                        leftJoin: jest.fn().mockReturnValue({
+                            where: jest.fn().mockResolvedValue([])
+                        })
                     })
                 })
             });
@@ -83,7 +85,9 @@ describe('CartService', () => {
                         limit: jest.fn().mockResolvedValue([mockCart])
                     }),
                     innerJoin: jest.fn().mockReturnValue({
-                        where: jest.fn().mockResolvedValue([])
+                        leftJoin: jest.fn().mockReturnValue({
+                            where: jest.fn().mockResolvedValue([])
+                        })
                     })
                 })
             });

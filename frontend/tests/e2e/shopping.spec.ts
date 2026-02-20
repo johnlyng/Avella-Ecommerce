@@ -13,8 +13,8 @@ test.describe('Shopping Flow', () => {
         const categoryLink = page.getByRole('link', { name: /Laptops/i }).first();
         await categoryLink.click();
 
-        // Check URL (case insensitive category check)
-        await expect(page).toHaveURL(/.*category=.*/);
+        // Wait for navigation to complete (generous timeout to handle Next.js routing)
+        await page.waitForURL(/.*category=.*/, { timeout: 10000 });
     });
 
     test('should handle the full cart journey: add, update, remove', async ({ page }) => {
@@ -23,10 +23,9 @@ test.describe('Shopping Flow', () => {
         const firstProduct = page.locator('div.group').first();
         const productName = await firstProduct.locator('h3').textContent();
 
-        const addToCartButton = firstProduct.getByRole('button', { name: /Add to Cart/i });
-        await addToCartButton.click();
+        await firstProduct.getByRole('button', { name: /Add to Cart/i }).click();
 
-        await expect(addToCartButton).toHaveText(/Added!/i);
+        await expect(firstProduct.getByRole('button')).toHaveText(/Added!/i);
 
         // Navigate to cart
         await page.goto('/cart');
@@ -36,10 +35,10 @@ test.describe('Shopping Flow', () => {
 
         // Remove item
         const removeButton = page.getByRole('button', { name: /Remove/i }).first();
-        if (await removeButton.isVisible()) {
-            await removeButton.click();
-            await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
-        }
+
+        // click auto-waits for visibility and actionability
+        await removeButton.click();
+        await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
     });
 
     test('cart should persist after page refresh', async ({ page }) => {

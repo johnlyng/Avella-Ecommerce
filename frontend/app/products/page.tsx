@@ -3,17 +3,19 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { ProductFilters } from '@/components/ProductFilters'
 
+type SearchParamsType = {
+    category?: string
+    search?: string
+    page?: string
+}
+
 interface ProductsPageProps {
-    searchParams: {
-        category?: string
-        search?: string
-        page?: string
-    }
+    searchParams: Promise<SearchParamsType>
 }
 
 export const revalidate = 60
 
-async function getProducts(searchParams: ProductsPageProps['searchParams']) {
+async function getProducts(searchParams: SearchParamsType) {
     const page = parseInt(searchParams.page || '1')
     const limit = 20
     const offset = (page - 1) * limit
@@ -32,7 +34,8 @@ async function getProducts(searchParams: ProductsPageProps['searchParams']) {
     }
 }
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+export default async function ProductsPage(props: ProductsPageProps) {
+    const searchParams = await props.searchParams;
     const { products, pagination, currentPage } = await getProducts(searchParams)
 
     const categoryLabel = searchParams.category

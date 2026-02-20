@@ -1,7 +1,7 @@
 # Avella API
 # Node.js 20 Alpine
 
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -12,7 +12,7 @@ RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 # Rebuild native modules for Alpine Linux
 RUN npm rebuild bcrypt --build-from-source
 

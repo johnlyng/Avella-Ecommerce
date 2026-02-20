@@ -49,9 +49,9 @@ export function ProductCard({ product }: ProductCardProps) {
     }
 
     return (
-        <Link href={`/products/${product.slug}`}>
-            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full bg-white">
-                <CardContent className="p-4">
+        <Card className="group flex flex-col hover:shadow-lg transition-all duration-300 h-full bg-white">
+            <Link href={`/products/${product.slug}`} className="flex-1">
+                <CardContent className="p-4 flex flex-col h-full">
                     {/* Product Image */}
                     <div className="relative aspect-square mb-4 overflow-hidden rounded-lg bg-gray-50">
                         {product.images && product.images.length > 0 ? (
@@ -86,12 +86,12 @@ export function ProductCard({ product }: ProductCardProps) {
                     </div>
 
                     {/* Product Info */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 mt-auto">
                         <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
                             {product.name}
                         </h3>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-2">
                             <span className="text-lg font-bold text-gray-900">
                                 {formatCurrency(product.price)}
                             </span>
@@ -101,24 +101,26 @@ export function ProductCard({ product }: ProductCardProps) {
                                 </span>
                             )}
                         </div>
-
-                        <Button
-                            className="w-full transition-all duration-300"
-                            variant={product.stock_quantity === 0 ? 'outline' : isAdded ? 'secondary' : 'default'}
-                            disabled={product.stock_quantity === 0 || isLoading}
-                            onClick={handleAddToCart}
-                        >
-                            {product.stock_quantity === 0
-                                ? 'Out of Stock'
-                                : isLoading
-                                    ? 'Adding...'
-                                    : isAdded
-                                        ? 'Added!'
-                                        : 'Add to Cart'}
-                        </Button>
                     </div>
                 </CardContent>
-            </Card>
-        </Link>
+            </Link>
+
+            <div className="p-4 pt-0">
+                <Button
+                    className="w-full transition-all duration-300"
+                    variant={product.stock_quantity === 0 ? 'outline' : isAdded ? 'secondary' : 'default'}
+                    disabled={product.stock_quantity === 0 || isLoading}
+                    onClick={handleAddToCart}
+                >
+                    {product.stock_quantity === 0
+                        ? 'Out of Stock'
+                        : isLoading
+                            ? 'Adding...'
+                            : isAdded
+                                ? 'Added!'
+                                : 'Add to Cart'}
+                </Button>
+            </div>
+        </Card>
     )
 }

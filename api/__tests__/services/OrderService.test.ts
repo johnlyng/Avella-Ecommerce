@@ -41,13 +41,16 @@ describe('OrderService', () => {
             const mockItems = [
                 {
                     cartItem: { quantity: 2, cartId: 100 },
-                    product: { id: 1, name: 'Test Product', price: '20.00', stockQuantity: 10, sku: 'SKU1' }
+                    product: { id: 1, name: 'Test Product', price: '20.00', sku: 'SKU1' },
+                    stockQuantity: 10
                 }
             ];
             mockTx.select.mockReturnValueOnce({
                 from: jest.fn().mockReturnValueOnce({
                     innerJoin: jest.fn().mockReturnValueOnce({
-                        where: jest.fn().mockResolvedValueOnce(mockItems)
+                        leftJoin: jest.fn().mockReturnValueOnce({
+                            where: jest.fn().mockResolvedValueOnce(mockItems)
+                        })
                     })
                 })
             });
@@ -73,7 +76,7 @@ describe('OrderService', () => {
 
             const result = await orderService.createOrder(mockCartParams);
 
-            expect(result).toEqual(mockNewOrder);
+            expect(result).toMatchObject({ id: 500, order_number: 'ORD-123' });
             expect(mockTx.insert).toHaveBeenCalledTimes(2); // Order + OrderItem
             expect(mockTx.update).toHaveBeenCalledTimes(1); // Stock update
             expect(mockTx.delete).toHaveBeenCalledTimes(1); // Clear cart
@@ -112,13 +115,16 @@ describe('OrderService', () => {
             const mockItems = [
                 {
                     cartItem: { quantity: 100, cartId: 100 },
-                    product: { id: 1, name: 'Rare Item', price: '1000.00', stockQuantity: 5 }
+                    product: { id: 1, name: 'Rare Item', price: '1000.00' },
+                    stockQuantity: 5
                 }
             ];
             mockTx.select.mockReturnValueOnce({
                 from: jest.fn().mockReturnValueOnce({
                     innerJoin: jest.fn().mockReturnValueOnce({
-                        where: jest.fn().mockResolvedValueOnce(mockItems)
+                        leftJoin: jest.fn().mockReturnValueOnce({
+                            where: jest.fn().mockResolvedValueOnce(mockItems)
+                        })
                     })
                 })
             });

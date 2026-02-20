@@ -8,7 +8,7 @@ jest.mock('../../db', () => ({
         from: jest.fn().mockReturnThis(),
         leftJoin: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
+
         offset: jest.fn().mockImplementation(() => {
             return Promise.resolve([
                 {
@@ -19,7 +19,6 @@ jest.mock('../../db', () => ({
                         description: 'Test Description',
                         price: '99.99',
                         compareAtPrice: '120.00',
-                        stockQuantity: 10,
                         sku: 'TEST-SKU',
                         categoryId: 1,
                         images: ['img1.jpg'],
@@ -29,12 +28,35 @@ jest.mock('../../db', () => ({
                         updatedAt: new Date()
                     },
                     categoryName: 'Electronics',
-                    categorySlug: 'electronics'
+                    categorySlug: 'electronics',
+                    stockQuantity: 10
                 }
             ]);
         }),
+        limit: jest.fn().mockReturnThis(),
         then: jest.fn().mockImplementation((resolve) => {
-            return Promise.resolve([{ count: 1 }]).then(resolve);
+            // Default then for count and get queries
+            return Promise.resolve([{
+                count: 1,
+                product: {
+                    id: 1,
+                    name: 'Test Product',
+                    slug: 'test-product',
+                    description: 'Test Description',
+                    price: '99.99',
+                    compareAtPrice: '120.00',
+                    sku: 'TEST-SKU',
+                    categoryId: 1,
+                    images: ['img1.jpg'],
+                    specifications: {},
+                    isActive: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                },
+                categoryName: 'Electronics',
+                categorySlug: 'electronics',
+                stockQuantity: 50
+            }]).then(resolve);
         }),
         $dynamic: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),

@@ -10,8 +10,8 @@ import { useCartMerge } from '@/hooks/useCartMerge'
 interface CartItem {
     id: string
     product_id: string
-    product_name: string
-    product_sku: string
+    name: string
+    sku: string
     price: number
     quantity: number
     image?: string

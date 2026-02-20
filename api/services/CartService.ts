@@ -381,6 +381,11 @@ class CartService {
                 }
             }
 
+            // Delete guest cart items first (FK constraint: cart_items references carts)
+            await db
+                .delete(cartItems)
+                .where(eq(cartItems.cartId, guestCart.id));
+
             // Delete guest cart
             await db
                 .delete(carts)

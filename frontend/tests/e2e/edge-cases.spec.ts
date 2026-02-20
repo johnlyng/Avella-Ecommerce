@@ -25,19 +25,20 @@ test.describe('Edge Cases & Resilience', () => {
         await page.goto('/');
 
         await page.evaluate(() => {
-            localStorage.setItem('cartId', '99999999-9999-9999-9999-999999999999');
+            localStorage.setItem('cartToken', '99999999-9999-9999-9999-999999999999');
         });
 
         await page.reload();
+        // Wait for the page to fully load after reload
+        await page.waitForSelector('div.group', { timeout: 15000 });
 
         const firstProduct = page.locator('div.group').first();
-        const addToCartButton = firstProduct.getByRole('button', { name: /Add to Cart/i });
-        await addToCartButton.click();
+        await firstProduct.getByRole('button', { name: /Add to Cart/i }).click();
 
         // Verify self-healing - using a generous timeout for the retry logic
-        await expect(addToCartButton).toHaveText(/Added!/i, { timeout: 15000 });
+        await expect(firstProduct.getByRole('button')).toHaveText(/Added!/i, { timeout: 15000 });
 
-        const newCartId = await page.evaluate(() => localStorage.getItem('cartId'));
+        const newCartId = await page.evaluate(() => localStorage.getItem('cartToken'));
         expect(newCartId).not.toBe('99999999-9999-9999-9999-999999999999');
         expect(newCartId).toBeTruthy();
     });
