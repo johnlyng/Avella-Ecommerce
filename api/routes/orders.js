@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const orderService = require('../services/OrderService').default;
 const { verifyApiKey } = require('../middleware/auth');
+const webhookService = require('../services/WebhookService').default;
 
 // POST /api/orders/external - Create order directly (API Key protected)
 router.post('/external', verifyApiKey, async (req, res) => {
@@ -14,6 +15,8 @@ router.post('/external', verifyApiKey, async (req, res) => {
     }
     try {
         const order = await orderService.createExternalOrder(req.body);
+        // Fire webhook (non-blocking)
+        webhookService.dispatch('order.created', order).catch(() => { });
         res.status(201).json({ data: order });
     } catch (error) {
         if (error.message.includes('not found') || error.message.includes('insufficient stock')) {
@@ -40,6 +43,8 @@ router.patch('/:id/status', verifyApiKey, async (req, res) => {
 
     try {
         const order = await orderService.updateOrderStatus(parseInt(id), status, trackingNumber);
+        // Fire webhook (non-blocking)
+        webhookService.dispatch('order.updated', order).catch(() => { });
         res.json({ data: order });
     } catch (error) {
         if (error.message.includes('not found')) {
@@ -76,6 +81,8 @@ router.post('/', async (req, res) => {
             billingAddress
         });
 
+        // Fire webhook (non-blocking)
+        webhookService.dispatch('order.created', order).catch(() => { });
         res.status(201).json({ data: order });
     } catch (error) {
         if (error.message === 'Cart not found') {

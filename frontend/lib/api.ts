@@ -251,6 +251,42 @@ class ApiClient {
             body: JSON.stringify(data),
         });
     }
+
+    // Webhooks
+    async getWebhookEndpoints(token: string) {
+        return this.request('/api/webhooks', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
+
+    async createWebhookEndpoint(token: string, data: { label: string; url: string; events: string[]; isActive?: boolean }) {
+        return this.request('/api/webhooks', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateWebhookEndpoint(token: string, id: number, data: Partial<{ label: string; url: string; events: string[]; isActive: boolean }>) {
+        return this.request(`/api/webhooks/${id}`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteWebhookEndpoint(token: string, id: number) {
+        return this.request(`/api/webhooks/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+    }
+
+    async getWebhookLogs(token: string) {
+        return this.request('/api/webhooks/logs', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    }
 }
 
 export const api = new ApiClient(API_URL);

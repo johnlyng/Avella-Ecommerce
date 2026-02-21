@@ -166,3 +166,32 @@ export type NewOrderItem = typeof orderItems.$inferInsert;
 
 export type Address = typeof addresses.$inferSelect;
 export type NewAddress = typeof addresses.$inferInsert;
+
+// Webhook Endpoints table
+export const webhookEndpoints = pgTable('webhook_endpoints', {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    label: varchar('label', { length: 255 }).notNull(),
+    url: text('url').notNull(),
+    events: text('events').array().notNull().default([]),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Webhook Logs table
+export const webhookLogs = pgTable('webhook_logs', {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    endpointId: integer('endpoint_id').references(() => webhookEndpoints.id, { onDelete: 'cascade' }),
+    event: varchar('event', { length: 100 }).notNull(),
+    status: varchar('status', { length: 20 }).notNull(), // 'success' | 'failed'
+    statusCode: integer('status_code'),
+    errorMessage: text('error_message'),
+    payload: jsonb('payload'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
+export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert;
+
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type NewWebhookLog = typeof webhookLogs.$inferInsert;

@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth');
 const customersRoutes = require('./routes/customers');
 const addressesRoutes = require('./routes/addresses');
 const companiesRoutes = require('./routes/companies');
+const webhooksRoutes = require('./routes/webhooks');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -63,6 +64,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/customers', customersRoutes);
 app.use('/api/addresses', addressesRoutes);
 app.use('/api/companies', companiesRoutes);
+app.use('/api/webhooks', webhooksRoutes);
 
 // 404 handler
 app.use((req, res) => {
