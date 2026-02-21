@@ -1,158 +1,178 @@
 # Avella Ecommerce
 
-A premium, integration-ready electronics e-commerce platform built with an API-first architecture following the B.L.A.S.T. protocol. Avella provides a full-featured storefront alongside a robust management API designed for seamless integration with external systems like ERPs, inventory managers, and customer support tools.
+A premium, integration-ready electronics e-commerce platform built with an API-first architecture. Avella provides a full-featured storefront alongside a robust management API designed for seamless integration with external systems like ERPs, inventory managers, and CRM tools.
 
 ## 🏗️ Architecture
 
-- **Frontend:** Next.js 14 with ShadCN UI components
-- **Backend:** Node.js REST API with Express & Drizzle ORM
-- **Database:** PostgreSQL 16
-- **Deployment:** Docker Desktop (OOTB orchestration)
-- **API Docs:** OpenAPI 3.0 (Swagger) specification
-- **Security:** Dual-layer auth (JWT for users, API Key for systems)
-
-## 🎨 Design
-
-Clean, minimalist aesthetic with vibrant blue accents (#2563EB), professional typography, and generous whitespace.
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 15 (App Router), ShadCN UI, Tailwind CSS |
+| **Backend** | Node.js, Express, Drizzle ORM |
+| **Database** | PostgreSQL 16 |
+| **Deployment** | Docker Desktop (multi-container via `docker-compose`) |
+| **API Docs** | OpenAPI 3.1 / Swagger UI |
+| **Auth** | JWT (customers) + API Key (system integrations) |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Docker Desktop installed and running
-- Node.js 20+ (for local development)
 
-### 1. Clone and Setup
+### 1. Clone and configure
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/johnlyng/Avella-Ecommerce.git
 cd Avella-Ecommerce
 cp .env.example .env
 ```
 
-### 2. Start All Services
+### 2. Start all services
 
 ```bash
 docker-compose up --build
 ```
 
-This will start:
+### 3. Seed the database
 
-- **PostgreSQL** on port 5432
-- **API** on port 3001
-- **Frontend** on port 3000
+```bash
+node api/seed.js
+```
 
-### 3. Access the Application
+### 4. Access the application
 
-- **Storefront:** <http://localhost:3000>
-- **API Docs (Swagger):** <http://localhost:3001/api-docs>
-- **API Base:** <http://localhost:3001/api>
+| Service | URL |
+|---|---|
+| Storefront | <http://localhost:3000> |
+| API Base | <http://localhost:3001/api> |
+| Swagger UI | <http://localhost:3001/api-docs> |
+| Drizzle Studio | <http://localhost:3001/database> |
 
-## 📦 Included Sample Data
+## 📦 Sample Data
 
-- **6 Categories:** Laptops, Smartphones, Tablets, Headphones, Smartwatches, Cameras
-- **48 Products:** 8 products per category with realistic specs and pricing
+Running `node api/seed.js` populates:
+
+- **Companies** — Avella AS + sample B2B partners
+- **Categories** — Laptops, Smartphones, Tablets, Headphones, Smartwatches, Cameras
+- **Products** — 48 products (8 per category) with realistic specs and pricing
+- **Inventory** — Stock levels for all products
+- **Users** — Avella AS employees with addresses
+- **Orders** — Sample orders for demo users
 
 ## 📂 Project Structure
 
 ```
-├── api/                    # Node.js REST API
-├── frontend/               # Next.js application
-├── database/
-│   ├── migrations/         # PostgreSQL schema
-│   └── seeds/              # Sample data
-├── tools/                  # Python automation scripts
-├── architecture/           # SOPs (Layer 1)
-├── .tmp/                   # Temporary workbench
-├── docker-compose.yml      # Multi-container orchestration
-└── .env                    # Environment variables
+├── api/
+│   ├── db/
+│   │   ├── schema.ts           # Drizzle ORM schema
+│   │   └── migrations/         # Auto-generated SQL migrations
+│   ├── routes/                 # Express route handlers
+│   ├── services/               # Business logic (CustomerService, WebhookService, …)
+│   ├── seed.js                 # Database seeder
+│   └── server.js               # Express entry point
+├── frontend/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── admin/              # Admin pages (products, webhooks)
+│   │   ├── profile/            # User profile & address management
+│   │   ├── register/           # Customer & company registration
+│   │   └── orders/             # Order history
+│   ├── components/             # Shared UI components
+│   ├── context/                # Auth context
+│   └── lib/api.ts              # Typed API client
+├── docker-compose.yml
+└── .env
 ```
 
-## 🧪 Development
+## ✨ Features
 
-### Database Migrations
+### Storefront (Customer-Facing)
 
-```bash
-# Reset database (WARNING: destroys data)
-docker-compose down -v
-docker-compose up postgres -d
+- Product catalogue with category filtering
+- Shopping cart (guest + authenticated, with merge on login)
+- Checkout and order placement
+- Order history
+- User profile with saved addresses
+- B2B company registration and lookup
+
+### Admin
+
+- Product management (create, edit, inventory updates)
+- Webhook management — configure outgoing HTTP endpoints for order events
+
+### API Integrations
+
+- **Webhook system** — fires `order.created` and `order.updated` events to registered URLs with delivery logging
+- **External orders** — `POST /api/orders/external` for ERP-driven order creation
+- **Customer API** — full CRUD for customers and companies
+
+## 📝 Key API Endpoints
+
+```
+# Authentication
+POST   /api/auth/register
+POST   /api/auth/login
+
+# Products (public read, API Key write)
+GET    /api/products
+POST   /api/products
+PATCH  /api/products/:id/inventory
+
+# Orders
+POST   /api/orders                  # Authenticated customer
+POST   /api/orders/external         # API Key (ERP integration)
+PATCH  /api/orders/:id/status       # API Key
+
+# Customers & Companies (API Key)
+GET    /api/customers
+GET    /api/companies
+POST   /api/companies
+
+# Webhooks (JWT admin)
+GET    /api/webhooks
+POST   /api/webhooks
+PATCH  /api/webhooks/:id
+DELETE /api/webhooks/:id
+GET    /api/webhooks/logs
 ```
 
-### API Testing
-
-```bash
-# Test all endpoints
-python tools/test_api.py
-
-# Manual test
-curl http://localhost:3001/api/products | jq
-```
-
-### Frontend Development
-
-```bash
-# Access logs
-docker-compose logs frontend -f
-
-# Rebuild frontend
-docker-compose up --build frontend
-```
-
-## 📝 API Documentation
-
-Interactive OpenAPI documentation available at <http://localhost:3001/api-docs>
-
-Key endpoints:
-
-- `GET /api/products` - List all products
-- `POST /api/products` - Create product (API Key)
-- `PATCH /api/products/:id/inventory` - Update stock (API Key)
-- `GET /api/customers` - List customers (API Key)
-- `POST /api/orders/external` - Place direct order (API Key)
-- `POST /api/auth/login` - User authentication
+Full interactive documentation at <http://localhost:3001/api-docs>
 
 ## 🔒 Security
 
-- **JWT Authentication:** Secure access for customer accounts.
-- **API Key Authentication:** `x-api-key` header for system-level management.
-- **bcrypt Hashing:** Industry-standard password security (cost 12).
-- **CORS & Validation:** Robust protection for cross-origin requests and data integrity.
+- **JWT** — signed tokens for customer sessions
+- **API Key** — `x-api-key` header for system-to-system access
+- **bcrypt** — password hashing at cost factor 12
+- **CORS & input validation** on all endpoints
 
-## 🎯 Roadmap
+## 🛠️ Development
 
-### Phase 3: Architect (In Progress)
+### Rebuild a single service
 
-- [ ] Build API routes
-- [ ] Implement authentication
-- [ ] Create frontend components
+```bash
+docker-compose build api --no-cache && docker-compose up -d api
+docker-compose build frontend --no-cache && docker-compose up -d frontend
+```
 
-### Phase 4: Stylize
+### Apply schema changes
 
-- [ ] Apply ShadCN UI components
-- [ ] Implement responsive design
-- [ ] Newsletter section
+```bash
+cd api
+npx drizzle-kit push
+```
 
-### Phase 5: Trigger
+### View logs
 
-- [ ] Production Docker configuration
-- [ ] CI/CD pipeline
-- [ ] Monitoring setup
-
-## 📚 Documentation
-
-- [Project Constitution](gemini.md) - Data schemas and behavioral rules
-- [Implementation Plan](implementation_plan.md) - Technical blueprint
-- [Design Reference](design_reference.md) - UI/UX inspiration
-- [Task Tracker](task_plan.md) - B.L.A.S.T. phase progress
+```bash
+docker-compose logs api -f
+docker-compose logs frontend -f
+```
 
 ## 🛠️ Built With
 
-- [Next.js](https://nextjs.org/) - React framework
-- [ShadCN UI](https://ui.shadcn.com/) - Component library
-- [PostgreSQL](https://www.postgresql.org/) - Database
-- [Express](https://expressjs.com/) - API framework
-- [Docker](https://www.docker.com/) - Containerization
+- [Next.js](https://nextjs.org/) · [ShadCN UI](https://ui.shadcn.com/) · [Tailwind CSS](https://tailwindcss.com/)
+- [Express](https://expressjs.com/) · [Drizzle ORM](https://orm.drizzle.team/)
+- [PostgreSQL](https://www.postgresql.org/) · [Docker](https://www.docker.com/)
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+MIT License — see LICENSE for details.
