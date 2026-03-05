@@ -43,6 +43,24 @@ export class AddressService {
         return address || null;
     }
 
+    async getDefaultAddress(userId: number) {
+        const [address] = await db
+            .select()
+            .from(addresses)
+            .where(and(eq(addresses.userId, userId), eq(addresses.isDefault, true)))
+            .limit(1);
+
+        return address || null;
+    }
+
+    async getAddressesByType(userId: number, type: string) {
+        return await db
+            .select()
+            .from(addresses)
+            .where(and(eq(addresses.userId, userId), eq(addresses.type, type)))
+            .orderBy(addresses.isDefault ? addresses.isDefault : addresses.createdAt);
+    }
+
     async updateAddress(id: number, userId: number, data: Partial<NewAddress>) {
         return await db.transaction(async (tx) => {
             if (data.isDefault) {

@@ -1,66 +1,106 @@
 const axios = require('axios');
-require('dotenv').config();
 
-const API_URL = process.env.API_URL || 'http://localhost:3001/api';
-// We need a valid JWT token for testing. Assuming a test user exists or we can login.
-// For simplicity in this script, you might need to provide a TOKEN manually or 
-// we assume a 'test-token' if the dev environment allows easy bypass, but better to use a real login.
+const API_URL = 'http://localhost:3001/api';
 
-async function verifyAddressManagement() {
-    console.log('--- Starting Address Management Verification ---\n');
-
+async function runTests() {
+    console.log('--- Starting Address API Tests ---');
     try {
-        // Step 1: Login to get token (assuming credentials from .env or default)
-        // Since I don't have user credentials, I'll expect the user to provide a token or 
-        // I can try to register/login a test user.
-        console.log('1. Logging in as test user...');
-        const loginRes = await axios.post(`${API_URL}/auth/login`, {
-            email: 'admin@avella.com', // Using admin for now as it's likely to exist
-            password: 'password123'
-        });
-        const token = loginRes.data.token;
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        console.log('   Login successful!\n');
+        // 1. Authenticate / Register a test user
+        const uniqueEmail = `testuser_${Date.now()}@example.com`;
+        console.log(`Registering user ${uniqueEmail}...`);
 
-        // Step 2: Create a new address
-        console.log('2. Creating a new address...');
-        const newAddress = {
-            firstName: 'Verification',
-            lastName: 'Test',
-            addressLine1: '123 Test Lane',
-            city: 'Testville',
-            state: 'TS',
-            postalCode: '12345',
-            country: 'Testland',
-            phoneNumber: '555-0000',
+        let token = '';
+        let userId = '';
+
+        try {
+            const regRes = await axios.post(`${API_URL}/auth/register`, {
+                email: uniqueEmail,
+                password: 'password123',
+                firstName: 'Test',
+                lastName: 'User'
+            });
+            token = regRes.data.data.token;
+            userId = regRes.data.data.user.id;
+            console.log(`User registered successfully with ID: ${userId}`);
+        } catch (err) {
+            console.error('Failed to register user:', err.response?.data || err.message);
+            return;
+        }
+
+        const headers = { Authorization: `Bearer ${token}` };
+
+        // 2. Create a new address (Shipping)
+        console.log('Creating a new shipping address...');
+        const createRes = await axios.post(`${API_URL}/addresses`, {
+            type: 'shipping',
+            firstName: 'John',
+            lastName: 'Doe',
+            addressLine1: '123 Main St',
+            city: 'New York',
+            postalCode: '10001',
+            country: 'USA'
+        }, { headers });
+
+        const shippingAddressId = createRes.data.data.id;
+        console.log(`Shipping Address created with ID: ${shippingAddressId}`);
+
+        // 3. Create a new address (Billing) - Set as default
+        console.log('Creating a new billing address and setting as default...');
+        const createRes2 = await axios.post(`${API_URL}/addresses`, {
+            type: 'billing',
+            firstName: 'John',
+            lastName: 'Doe',
+            addressLine1: '456 Business Ave',
+            city: 'New York',
+            postalCode: '10002',
+            country: 'USA',
             isDefault: true
-        };
-        const createRes = await axios.post(`${API_URL}/addresses`, newAddress, config);
-        const addressId = createRes.data.data.id;
-        console.log(`   Address created with ID: ${addressId}\n`);
+        }, { headers });
 
-        // Step 3: List addresses
-        console.log('3. Listing addresses...');
-        const listRes = await axios.get(`${API_URL}/addresses`, config);
-        console.log(`   Found ${listRes.data.data.length} addresses.\n`);
+        const billingAddressId = createRes2.data.data.id;
+        console.log(`Billing Address created with ID: ${billingAddressId}`);
 
-        // Step 4: Update address
-        console.log('4. Updating address...');
-        const updateRes = await axios.put(`${API_URL}/addresses/${addressId}`, {
-            city: 'Updated Testville'
-        }, config);
-        console.log(`   Update successful: ${updateRes.data.data.city}\n`);
+        // 4. Fetch looking up by type 'shipping'
+        console.log('Fetching addresses by type "shipping"...');
+        const typeRes = await axios.get(`${API_URL}/addresses/type/shipping`, { headers });
+        console.log(`Found ${typeRes.data.data.length} shipping addresses.`);
+        if (typeRes.data.data[0].id !== shippingAddressId) {
+            throw new Error('Shipping address lookup failed validation.');
+        }
 
-        // Step 5: Delete address
-        console.log('5. Deleting address...');
-        await axios.delete(`${API_URL}/addresses/${addressId}`, config);
-        console.log('   Deletion successful!\n');
+        // 5. Fetch the default address
+        console.log('Fetching the default address...');
+        const defaultRes = await axios.get(`${API_URL}/addresses/default`, { headers });
+        console.log(`Default address ID: ${defaultRes.data.data?.id}`);
+        if (defaultRes.data.data?.id !== billingAddressId) {
+            throw new Error('Default address lookup failed validation.');
+        }
 
-        console.log('--- Verification Completed Successfully! ---');
+        // 6. Delete the addresses
+        console.log(`Deleting shipping address ${shippingAddressId}...`);
+        await axios.delete(`${API_URL}/addresses/${shippingAddressId}`, { headers });
+
+        console.log(`Deleting billing/default address ${billingAddressId}...`);
+        await axios.delete(`${API_URL}/addresses/${billingAddressId}`, { headers });
+
+        console.log('Validating deletion...');
+        try {
+            await axios.get(`${API_URL}/addresses/${shippingAddressId}`, { headers });
+            throw new Error('Shipping address still exists!');
+        } catch (err) {
+            if (err.response?.status === 404) {
+                console.log('Shipping address successfully deleted (404).');
+            } else {
+                throw err;
+            }
+        }
+
+        console.log('--- All Tests Passed Successfully! ---');
+
     } catch (error) {
-        console.error('Core Verification Failed:', error.response ? error.response.data : error.message);
+        console.error('Test Failed:', error.response?.data || error.message);
         process.exit(1);
     }
 }
 
-verifyAddressManagement();
+runTests();

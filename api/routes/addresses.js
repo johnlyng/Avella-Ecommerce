@@ -21,6 +21,24 @@ router.post('/', verifyToken, async (req, res) => {
     res.status(201).json({ data: address });
 });
 
+// GET /api/addresses/default - Get default address
+router.get('/default', verifyToken, async (req, res) => {
+    const userId = req.user.id;
+    const address = await addressService.getDefaultAddress(userId);
+    if (!address) {
+        return res.status(404).json({ error: 'Not Found', message: 'Default address not found' });
+    }
+    res.json({ data: address });
+});
+
+// GET /api/addresses/type/:type - Get addresses by type
+router.get('/type/:type', verifyToken, async (req, res) => {
+    const userId = req.user.id;
+    const type = req.params.type;
+    const result = await addressService.getAddressesByType(userId, type);
+    res.json({ data: result });
+});
+
 // GET /api/addresses/:id - Get specific address
 router.get('/:id', verifyToken, async (req, res) => {
     const userId = req.user.id;
